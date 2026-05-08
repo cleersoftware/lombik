@@ -50,7 +50,7 @@ class User(db.Model):
 
     last_seen = db.Column(
         db.DateTime(timezone=True), 
-        default=utc_now()
+        default=utc_now
     )
 
     failed_login_attempts = db.Column(
@@ -67,5 +67,5 @@ class User(db.Model):
     )
 
     deleted_at = db.Column(
-        db.Column.DateTime(timezone=True)
+        db.DateTime(timezone=True)
     )

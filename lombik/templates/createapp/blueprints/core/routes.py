@@ -8,7 +8,7 @@ core_bp = Blueprint(
     static_folder="static"
 )
 
-@core_bp.route("/home")
+@core_bp.route("/")
 @login_required
 def home():
     context = {

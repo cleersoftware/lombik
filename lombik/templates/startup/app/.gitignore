@@ -1,7 +1,0 @@
-.env
-/flask_session
-*__pycache__
-.bashrc
-.profile
-.bash_aliases
-.ssh/

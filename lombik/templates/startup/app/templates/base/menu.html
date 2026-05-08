@@ -1,0 +1,196 @@
+<!-- desktop -->
+<style>
+    #desktopNavigation.collapsed .nav-text {
+        display: none;
+    }
+    
+    #desktopNavigation.collapsed h2 {
+        display: none;
+    }
+
+    #desktopNavigation.collapsed a {
+        justify-content: center;
+    }
+
+    #desktopNavigation.collapsed .nav-item {
+        padding-left: 0;
+        padding-right: 0;
+        justify-content: center;
+    }
+
+    </style>
+
+<aside
+id="desktopNavigation"
+class="
+    hidden
+    h-[100dvh] w-12 lg:w-52
+    lg:flex
+    fixed 
+    left-0 top-0
+    bg-zinc-100
+    dark:bg-zinc-900
+    border-r 
+    border-zinc-300
+    dark:border-neutral-700
+    p-2        
+    flex flex-col gap-2
+    overflow-y-auto no-scrollbar
+    z-40
+    transition-all
+    duration-300
+    ease-in-out
+    "
+>
+
+<div class="flex items-center justify-between p-2">
+    <a href="{{ url_for('core_bp.home') }}" id="desktopNavigationLogo" class="">
+        <!-- REPLACE LOGO -->
+        <div class="flex items-center justify-between md:justify-center lg:justify-start">
+            <span class="text-sm font-semibold hidden lg:block">
+                <p class="font-semibold text-2xl text-gray-700 dark:text-gray-100">cleer<span class="text-primary ml-[-4px]">.</span></p>
+            </span>
+        </div>
+        <!-- END LOGO -->
+    </a>
+    <div>
+        <button 
+            onclick="collapseNavigation()"
+            id="desktopNavCollapseBtn"
+            class="flex items-center">
+            <ion-icon name="chevron-back-outline" class="text-lg mt-2 hover:text-primary"></ion-icon>
+        </button>
+    </div>
+</div>
+<div class="pt-6 w-full h-full flex flex-col justify-between">
+    <div>
+        <h2 class="text-xs font-semibold text-gray-500  uppercase mb-3 px-2 tracking-wide hidden lg:block group-hover:md:block">
+            Navigation
+        </h2>
+        <nav class="space-y-2">
+            {% set nav_items = [
+                {"name": "Home", "url": "core_bp.home", "icon": "home-outline", "selected": "home"},
+            ] %}
+            {% for item in nav_items %}
+            <a href="{{ url_for(item.url) }}" class="nav-item font-normal dark:font-thin flex items-center gap-2 w-full px-4 py-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 {% if selected == item.selected %} bg-gray-200 dark:bg-zinc-700 {% endif %}">
+                <ion-icon name="{{ item.icon }}"></ion-icon>
+                <span class="nav-text">{{ item.name }}</span>
+            </a>
+            {% endfor %}
+        </nav>
+        
+    </div>
+
+    <div class="space-y-2">
+        <h2 class="text-xs font-semibold text-gray-500  uppercase mb-3 px-2 tracking-wide hidden lg:block group-hover:md:block">
+            CONFIGURATION
+        </h2>
+        <a href="{{ url_for('settings_bp.settings') }}" class="nav-item font-normal dark:font-thin flex items-center gap-2 w-full px-4 py-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 {% if selected == 'settings' %} bg-gray-200 dark:bg-zinc-700 {% endif %}">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span class="nav-text">Settings</span>
+        </a>
+        <button 
+            onclick="toggleDarkMode()"
+            id="changeThemeBtn"
+            class="nav-item flex items-center gap-2 w-full px-4 py-2 rounded-lg font-normal dark:font-thin hover:bg-zinc-200 dark:hover:bg-zinc-700">
+            <ion-icon id="themeIcon" name="moon-outline"></ion-icon>
+            <span id="themeText" class="nav-text">Dark mode</span>
+        </button>
+        
+        <form method="POST" action="{{ url_for('auth_bp.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <button type="submit"
+                class="nav-item flex items-center gap-2 w-full px-4 py-2 rounded-lg font-normal dark:font-thin hover:bg-zinc-200 dark:hover:bg-zinc-700">
+                <ion-icon id="themeIcon" name="log-out-outline"></ion-icon>
+                <span id="themeText" class="nav-text">Log out</span>
+            </button>
+        </form>
+
+    </div>
+</div>
+</aside>
+
+<!-- mobile -->
+<div class="
+    lg:hidden 
+    fixed bottom-0 inset-x-0 
+    w-full 
+    h-18
+    bg-white/90 backdrop-blur-lg
+    dark:bg-zinc-800
+    border-t 
+    border-gray-200
+    dark:border-zinc-700
+    shadow-[0_-4px_20px_rgba(0,0,0,0.05)]
+    z-40
+    px-4
+    pb-2
+    pt-1
+">
+    <nav class="w-full h-full flex items-center justify-between gap-1">
+        <!-- Dashboard (active example) -->
+        <div class="relative flex w-full items-center justify-evenly gap-1">
+        {% for item in [
+            {'name': 'Home', 'url': 'core_bp.home', 'icon': 'home-outline', 'selected': 'home'},
+            {'name': 'Settings', 'url': 'settings_bp.settings', 'icon': 'settings-outline', 'selected': 'settings'},
+        ] %}
+        <div>
+            <a href="{{ url_for(item.url) }}"
+            class="flex flex-col items-center justify-center text-xs
+            hover:text-primary dark:hover:text-primary
+            {% if selected == item.selected %}
+                text-primary dark:text-primary font-medium
+            {% else %}
+                text-gray-500 dark:text-zinc-200
+            {% endif %}"
+                
+                ">
+                    
+                    <ion-icon name="{{ item.icon }}" class="text-xl"></ion-icon>
+                    {{ item.name }}
+                </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    </nav>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const nav = document.getElementById("desktopNavigation");
+    const logo = document.getElementById("desktopNavigationLogo");
+    const base = document.getElementById("baseMain");
+    const btnIcon = document.getElementById("desktopNavCollapseBtn").querySelector("ion-icon");
+
+    const saved = localStorage.getItem("sidebarCollapsed") === "true";
+
+    applyState(saved);
+
+    function applyState(collapsed) {
+        nav.classList.toggle("collapsed", collapsed);
+
+        nav.classList.toggle("w-12", collapsed);
+        base.classList.toggle("lg:pl-12", collapsed);
+
+        nav.classList.toggle("lg:w-52", !collapsed);
+        base.classList.toggle("lg:pl-52", !collapsed);
+
+        logo.classList.toggle("hidden", collapsed);
+
+        btnIcon.setAttribute(
+            "name",
+            collapsed ? "chevron-forward-outline" : "chevron-back-outline"
+        );
+    }
+
+    window.collapseNavigation = function () {
+        const collapsed = nav.classList.contains("w-12");
+        const newState = !collapsed;
+
+        localStorage.setItem("sidebarCollapsed", String(newState));
+        applyState(newState);
+    };
+});
+</script>

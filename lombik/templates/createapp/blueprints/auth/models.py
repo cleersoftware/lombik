@@ -48,6 +48,24 @@ class User(db.Model):
         default=utc_now
     )
 
+    last_seen = db.Column(
+        db.DateTime(timezone=True), 
+        default=utc_now()
+    )
+
+    failed_login_attempts = db.Column(
+        db.Integer, 
+        default=0
+    )
+
+    locked_until = db.Column(
+        db.DateTime(timezone=True)
+    )
+
+    deactivated_at = db.Column(
+        db.DateTime(timezone=True)
+    )
+
     deleted_at = db.Column(
         db.Column.DateTime(timezone=True)
     )

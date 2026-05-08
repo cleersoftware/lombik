@@ -162,16 +162,12 @@ def _user_management(app):
 
         if not user_id:
             g.user = None
-            g.tenants = []
-            g.tenant = None
             return
 
         user = load_user(user_id)
 
         if not user:
             g.user = None
-            g.tenants = []
-            g.tenant = None
             return
 
         g.user = user

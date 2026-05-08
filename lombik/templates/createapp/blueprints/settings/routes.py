@@ -1,4 +1,5 @@
 from flask import render_template, redirect, url_for, Blueprint, g
+from wrappers import login_required
 
 settings_bp = Blueprint(
     "settings_bp", 
@@ -8,6 +9,7 @@ settings_bp = Blueprint(
 )
 
 @settings_bp.route("/settings")
+@login_required
 def settings():
     context = {
         "selected": "settings",

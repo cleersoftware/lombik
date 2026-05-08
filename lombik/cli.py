@@ -5,7 +5,7 @@ import secrets
 
 
 BASE_DIR = Path(__file__).parent
-STARTUP_TEMPLATE = BASE_DIR / "templates" / "startup"
+STARTUP_TEMPLATE = BASE_DIR / "templates" / "createapp"
 
 
 @click.group()
@@ -13,23 +13,37 @@ def cli():
     pass
 
 
+def is_text_file(path: Path) -> bool:
+    try:
+        path.read_text(encoding="utf-8")
+        return True
+    except UnicodeDecodeError:
+        return False
+    except Exception:
+        return False
+
+
 def replace_placeholders(target_dir, replacements):
 
     for file in Path(target_dir).rglob("*"):
 
-        if file.is_file():
+        if not file.is_file():
+            continue
 
-            content = file.read_text()
+        try:
+            content = file.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
 
-            for key, value in replacements.items():
-                content = content.replace(key, value)
+        for key, value in replacements.items():
+            content = content.replace(key, value)
 
-            file.write_text(content)
+        file.write_text(content, encoding="utf-8")
 
 
 @cli.command()
 @click.argument("name")
-def startup(name):
+def createapp(name):
 
     target = Path.cwd() / name
 

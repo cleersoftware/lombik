@@ -66,6 +66,6 @@
     <script src="{{ url_for('static', filename='js/modal.js') }}" defer></script>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% include 'partials/flash.html' %}
+    {% include 'base/partials/flash.html' %}
     {% endwith %}
 </html>

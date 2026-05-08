@@ -1,4 +1,5 @@
 from flask import render_template, redirect, url_for, Blueprint, g
+from wrappers import login_required
 
 core_bp = Blueprint(
     "core_bp", 
@@ -8,6 +9,7 @@ core_bp = Blueprint(
 )
 
 @core_bp.route("/home")
+@login_required
 def home():
     context = {
         "selected": "home",

@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from blueprints.core.error_logging import log_error
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from blueprints.auth.roles import roles
 from dataclasses import dataclass
 from typing import Optional, Any
@@ -47,7 +47,7 @@ def username_exists(username: str) -> bool:
     return User.query.filter_by(username=username).first() is not None
 
 def validate_role(role: str) -> bool:
-    return True if role.lower().strip() in roles() else False
+    return role.strip().lower() in {r.lower() for r in roles()}
 
 
 def email_exists(email: str) -> bool:
@@ -63,7 +63,7 @@ def validate_user_creation(username: str, email: str, role: str, password: str) 
         return Result(False, message="Invalid role")
 
     if not valid_email_pattern(email):
-        return Result(False, message="Invalid email address")
+        return Result(False, message="Invalid credentials")
 
     if email_exists(email):
         return Result(False, message="Email already registered")
@@ -77,7 +77,7 @@ def validate_user_creation(username: str, email: str, role: str, password: str) 
 
 def create_user(username: str, email: str, role: str, password: str) -> Result:
 
-    validation = validate_user_creation(username, email, password)
+    validation = validate_user_creation(username, email, role,  password)
     if not validation.success:
         return validation
 
@@ -105,9 +105,70 @@ def create_user(username: str, email: str, role: str, password: str) -> Result:
 
         return Result(False, "An error occured when creating the user")
     
+
+def authenticate_user(email, password):
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return {
+            "success": False,
+            "message": "Invalid credentials"
+        }
+    
+    now = datetime.now(timezone.utc)
+
+    if user.status == "deleted":
+        delete_at = user.deactivated_at + timedelta(days=30)
+        if delete_at < now:
+            message = "This account and all its data was deleted permanently. Please create a new one"
+        else:
+            message = f"This account will be permanently deleted on {delete_at.strftime("%Y-%m-%d %H:%M UTC")}. To stop it please email us!"
+        return {
+            "success": False,
+            "message": message
+        }
+    
+    now = datetime.now(timezone.utc)
+
+    if user.locked_until and user.locked_until > now:
+        return {
+            "success": False,
+            "message": "Too many attempts. Try again later."
+        }
+    
+    if not check_password_hash(user.password_hash, password):
+        user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+        
+        if user.failed_login_attempts >= 5:
+            user.locked_until = now + timedelta(minutes=10)
+        
+        db.session.commit()
+
+        return {
+            "success": False,
+            "message": "Incorrect password"
+        }
+    
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    db.session.commit()
+
+    return {
+        "success": True,
+        "message": "user authenticated successfully",
+        "user": user
+    }
+
     
 def load_user(user_id):
-    user = User.query.filter_by(user_id=user_id).first()
+    user = db.session.query(
+        User.user_id,
+        User.username,
+        User.email,
+        User.role,
+        User.status,
+        User.created_at
+    ).filter_by(user_id=user_id).first()
     if not user:
         return None
 

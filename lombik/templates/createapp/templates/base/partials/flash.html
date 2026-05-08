@@ -1,0 +1,23 @@
+<style>
+    @keyframes background-move {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .animate-background {
+      animation: background-move 4s ease infinite;
+      background-size: 400% 400%;
+    }
+    </style>
+    
+    <div data-flash class="flash fixed bottom-4 right-4 space-y-2 z-50 shadow-xl rounded-lg">
+      {% for category, message in messages %}
+        <div class="block rounded-lg p-[2px] animate-background bg-gradient-to-r from-gray-50 via-primary to-gray-50">
+          <div class="block rounded-lg bg-white px-6 py-4 flex items-center gap-2 text-md text-slate-800">
+            <ion-icon name="{{ message.icon }}" class="{{ message.icon_class }} text-xl"></ion-icon>
+            {{ message.text }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    

@@ -1,9 +1,11 @@
 from flask import Flask, g, session, render_template, send_from_directory, current_app
+from flask.cli import with_appcontext
 from flask_wtf.csrf import CSRFError
 from flask_wtf import CSRFProtect
 from flask_session import Session
 from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
+import click
 import time
 import sys
 import os
@@ -16,6 +18,7 @@ from models import load_models
 # import all your bleurpints here
 from blueprints.core.routes import core_bp
 from blueprints.auth.routes import auth_bp
+from blueprints.settings.routes import settings_bp
 
 load_dotenv()
 
@@ -64,6 +67,7 @@ def _init_session_dir(app):
 def _init_blueprints(app):
     app.register_blueprint(core_bp, url_prefix="/")
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(settings_bp, url_prefix="/settings")
 
 
 def _init_hooks(app):
@@ -154,7 +158,7 @@ def _init_error_handlers(app):
     
 
 def _user_management(app):
-    from blueprints.auth.services import load_user
+    from blueprints.auth.services import load_user, create_user
 
     @app.before_request
     def fetch_user():
@@ -171,5 +175,60 @@ def _user_management(app):
             return
 
         g.user = user
-        g.tenants = user.tenants
-        g.tenant = user.tenants[0] if user.tenants else None
+
+    @app.cli.command("initdb")
+    @with_appcontext
+    def initdb():
+        import subprocess
+
+        required = [
+            "DEV_MYSQL_USERNAME",
+            "DEV_MYSQL_PASS",
+            "DEV_MYSQL_HOST",
+            "DEV_MYSQL_NAME"
+        ]
+
+        missing = [x for x in required if not os.getenv(x)]
+        if missing:
+            print(f"Missing env vars: {', '.join(missing)}")
+            return
+        
+        subprocess.run(["flask", "db", "init"])
+        subprocess.run(["flask", "db", "migrate", "-m", "auto init"])
+        subprocess.run(["flask", "db", "upgrade"])
+        print("Database initialized.")
+
+    @app.cli.command("superuser")
+    @with_appcontext
+    def superuser():
+        from getpass import getpass
+        import os
+
+        print("Starting application...")
+
+        load_models()
+
+        email = input("Email: ").lower().strip()
+        username = input("Username: ").lower().strip()
+
+        while True:
+            password = getpass("Password: ")
+            password_confirm = getpass("Again: ")
+
+            if password == password_confirm:
+                break
+            print("Passwords do not match")
+
+        res = create_user(
+            username=username,
+            email=email,
+            role="owner",
+            password=password
+        )
+
+        if not res.success:
+            print(f"Error: {res.message}")
+            return
+
+        print("\nSuperuser created successfully.")
+        print("Run: flask run --debug")

@@ -7,7 +7,6 @@ from typing import Optional, Any
 from models import User
 from flask import g
 from db import db
-import traceback
 import uuid
 import re
 
@@ -63,7 +62,7 @@ def validate_user_creation(username: str, email: str, role: str, password: str) 
         return Result(False, message="Invalid role")
 
     if not valid_email_pattern(email):
-        return Result(False, message="Invalid credentials")
+        return Result(False, message="Invalid email address")
 
     if email_exists(email):
         return Result(False, message="Email already registered")
@@ -93,7 +92,7 @@ def create_user(username: str, email: str, role: str, password: str) -> Result:
         db.session.add(user)
         db.session.commit()
         
-        return Result(True, "User created successfully")
+        return Result(True, message="User created successfully")
     
     except Exception as e:
         log_error(
@@ -103,17 +102,14 @@ def create_user(username: str, email: str, role: str, password: str) -> Result:
             exception=e
         )
 
-        return Result(False, "An error occured when creating the user")
+        return Result(False, message="An error occurred when creating the user")
     
 
 def authenticate_user(email, password):
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        return {
-            "success": False,
-            "message": "Invalid credentials"
-        }
+        return Result(False, message="invalid credentials")
     
     now = datetime.now(timezone.utc)
 
@@ -122,19 +118,13 @@ def authenticate_user(email, password):
         if delete_at < now:
             message = "This account and all its data was deleted permanently. Please create a new one"
         else:
-            message = f"This account will be permanently deleted on {delete_at.strftime("%Y-%m-%d %H:%M UTC")}. To stop it please email us!"
-        return {
-            "success": False,
-            "message": message
-        }
+            message = f"This account will be permanently deleted on {delete_at.strftime('%Y-%m-%d %H:%M UTC')}."
+        return Result(False, message=message)
     
     now = datetime.now(timezone.utc)
 
     if user.locked_until and user.locked_until > now:
-        return {
-            "success": False,
-            "message": "Too many attempts. Try again later."
-        }
+        return Result(False, message="Too many attempts. Try again later.")
     
     if not check_password_hash(user.password_hash, password):
         user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
@@ -144,20 +134,17 @@ def authenticate_user(email, password):
         
         db.session.commit()
 
-        return {
-            "success": False,
-            "message": "Incorrect password"
-        }
+        return Result(False, message="Invalid credentials")
     
     user.failed_login_attempts = 0
     user.locked_until = None
     db.session.commit()
 
-    return {
-        "success": True,
-        "message": "user authenticated successfully",
-        "user": user
-    }
+    return Result(
+        True, 
+        data={"user_id": user.user_id},
+        message="User authenticated successfully"
+    )
 
     
 def load_user(user_id):

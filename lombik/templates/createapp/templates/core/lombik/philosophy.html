@@ -1,0 +1,90 @@
+<section class="w-full max-w-4xl mt-32 px-6">
+
+    <!-- meta -->
+    <div class="mb-20 space-y-3">
+
+        <p class="text-xs uppercase tracking-[0.35em] text-zinc-400">
+            Lombik Philosophy
+        </p>
+
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-zinc-800 dark:text-zinc-100">
+            Building webapps shouldn't be complicated
+        </h2>
+
+        <p class="text-sm text-zinc-500 dark:text-zinc-500">
+            Notes on speed, structure and sane defaults.
+        </p>
+
+        <div class="space-y-4">
+            <p class="text-lg leading-[2] text-zinc-700 dark:text-zinc-200 font-semibold">Powered by</p>
+            <div class="flex flex-wrap gap-4 items-center justify-center">
+                {% set stack = [
+                    {"name": "Flask", "url": "https://flask.palletsprojects.com"},
+                    {"name": "HTMX", "url": "https://htmx.org"},
+                    {"name": "Tailwind", "url": "https://tailwindcss.com"},
+                    {"name": "SQL Alchmeny", "url": "https://www.sqlalchemy.org"},
+                    {"name": "MySQL", "url": "https://mysql.com"}
+                ] %}
+                {% for lib in stack %}
+                    <a href="{{ lib.url }}" target="_blank" class="px-4 py-1 border border-primary rounded-full hover:scale-110 transition-all duration-300">{{ lib.name }}</a>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <article class="space-y-24">
+
+        <div class="space-y-8">
+            <!-- <p class="text-sm leading-[2] text-zinc-500 dark:text-zinc-400 bookfont">
+                <a href="#Authentication">Authentication.</a>
+                <a href="#SessionManagement">Session management.</a>
+                <a href="#Structure">Structure.</a>
+                <a href="#EnvironmentConfigs">Environment configs.</a>
+                <a href="#Blueprints">Blueprints.</a>
+                <a href="#UtilityFunctions">Utility functions.</a>
+                <a href="#ORM">ORM.</a>
+                <a href="#TemplateFilters">Template filters.</a>
+                
+            </p> -->
+
+            
+
+            <p class="text-2xl leading-[1.9] text-zinc-700 dark:text-zinc-300 font-light">
+                Sometimes it's fine to re-invent the wheel in order to learn how wheels work. That's where Lombik begins.
+            </p>
+        </div>
+
+        {% 
+         set chapters = [
+            {
+                "subtitle": "The Architecture of Simplicity",
+                "title": "Why?",
+                "content": """
+                Born out of necessity, Lombik is a product of my own requirements to kickstart webapps fast and avoid re-writing the same things. 
+                It is simplified enough to fit all use cases.
+                """
+            }
+         ]    
+        %}
+        {% for chapter in chapters %}
+        <div class="border-l border-zinc-200 dark:border-zinc-800 pl-8 space-y-6">
+
+            <span class="text-xs uppercase tracking-[0.3em] text-primary">
+                {{ chapter.subtitle  }}
+            </span>
+
+            <p class="text-2xl leading-[1.8] text-zinc-700 dark:text-zinc-300 font-light">
+                {{ chapter.title }}
+            </p>
+
+            <p class="text-lg leading-[2] text-zinc-500 dark:text-zinc-400 bookfont">
+                {{ chapter.content }}
+            </p>
+
+        </div>
+        {% endfor %}
+        
+    </article>
+
+</section>

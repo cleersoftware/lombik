@@ -28,6 +28,7 @@ def create_app(env="default"):
     
     load_models()
     # load models first otherwise fetch will never happen
+    # also, stop trying to make fetch happen
     _user_management(app)
 
     _init_config(app, env)
@@ -101,6 +102,8 @@ There is more.
 
 """
 def _init_filters(app):
+    from markdown import markdown
+
     @app.template_filter("localtimezone")
     def localtimezone(dt):
         if not dt:
@@ -136,6 +139,11 @@ def _init_filters(app):
     @app.template_filter("shortdatetime")
     def shortdatetime(dt):
         return _fmt(dt, "%b %d %H:%M").lower()
+    
+    
+    @app.template_filter("proper")
+    def proper(s):
+        return s.replace("_", " ").title()
 
 
 def _init_routes(app):

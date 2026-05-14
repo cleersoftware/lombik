@@ -1,5 +1,7 @@
 from flask import render_template, redirect, url_for, Blueprint, g
 from wrappers import login_required
+from markdown import markdown
+from pathlib import Path
 
 core_bp = Blueprint(
     "core_bp", 

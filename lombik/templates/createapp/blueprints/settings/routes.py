@@ -13,6 +13,7 @@ settings_bp = Blueprint(
 def settings():
     context = {
         "selected": "settings",
-        "user": g.user
+        "user": g.user,
+
     }
     return render_template("/settings/general.html", **context)

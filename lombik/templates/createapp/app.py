@@ -5,9 +5,7 @@ from flask_wtf import CSRFProtect
 from flask_session import Session
 from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
-import click
 import time
-import sys
 import os
 
 from db import db, migrate
@@ -110,8 +108,8 @@ def _init_filters(app):
             return ""
 
         tz = "UTC"
-        if hasattr(g, "user") and g.tenant:
-            tz = g.tenant.timezone
+        if hasattr(g, "user"):
+            user_timezone = g.user.timezone
 
         return dt.astimezone(ZoneInfo(tz))
 
@@ -144,7 +142,17 @@ def _init_filters(app):
     @app.template_filter("proper")
     def proper(s):
         return s.replace("_", " ").title()
+    
 
+    @app.template_filter("possessive")
+    def possessive(s):
+        if not s:
+            return ""
+        if s.lower().endswith("s"):
+            return f"{s}'"
+        return f"{s}'s"
+    
+    
 
 def _init_routes(app):
 

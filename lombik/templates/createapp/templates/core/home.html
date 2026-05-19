@@ -15,11 +15,13 @@ Home
     <section class="max-w-6xl mx-auto px-6 py-20 flex flex-col items-center text-center gap-10">
         <div class="space-y-6 max-w-3xl">
             <h1 class="text-3xl font-semibold">Welcome {{ user.username | proper }}!</h1>
+            {% include 'auth/partials/lombik_version.html' %}
             <p class="text-xs uppercase tracking-[0.35em] text-zinc-600 dark:text-zinc-300">
-                The basics of lombik
+                3, 2, 1... Developing!
             </p>
         </div>
     </section>
+
 </main>
 
 {% endblock %}

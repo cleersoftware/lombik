@@ -1,34 +1,105 @@
-# Lombik
-#### A cli based scaffold engine for Flask, the greatest framework of all times.
+# Lombik  
+#### A scaffold engine for Flask — because starting from scratch is overrated.
 
-This readme will serve perfectly as a self documentation file as I go, and at the end of it I will re-write it with the final details. 
-That means that if you see this, either my company cleersoftware has taken off and you might work with me on enhancing the scaffold for our apps. 
-Another possibility is that lombik took off, and you are reading the early commits. Have fun, there is probably a lot of them.
-Anyways, I'm gonan actually start on explaning / plannign how thigns will work.
+Lombik exists to remove the boring parts of starting a Flask project. It gives you a ready-to-use structure so you can focus on building, not wiring things together.
 
-> Install lombik
-Run `pip install lombik`
+It leans heavily into a **hypermedia-first approach**, using Jinja2, template filters, HTMX, and Tailwind to keep logic close to the UI and reduce frontend complexity.
 
-> Create app
-To create an app called *myapp*, run `lombik createapp myapp` then `cd myapp`
-This creates the entire structure of your application in one go and you can run `flask run --debug`
+---
 
-> Create superuser
-Lombik comes with MySQL as a default db. In the generated .env file you'll find the credentials for local development.
-Replace those placeholders with your actual dev credentials and production if you have it already.
-When done, initialize the database by running `flask initdb` and then you can run `flask superuser` to create your owner account.
-With this, you'll be able to log in to your app and start developing from there.
+## What you get out of the box
 
-This is a quite simple auth system, in fact it is simple by design and meant to be replaced for production apps with something more robust.
+- Flask project structure pre-wired and ready to run  
+- Simple authentication system  
+- MySQL integration  
+- Tailwind + HTMX setup  
+- Error handling  
+- CSRF protection + session expiry  
+- Pre-imported common utilities  
+- Base templates for desktop and mobile  
 
-> Features and benefits
-On top of the structural guidance, lombik comes with a few built in goodies.
+---
 
-- User authentication and session handling
-- CSRF / session expiry
-- Error handling
-- Structure
-- Template filters for frontend development
-- Pre-imported libraries
-- General templates for desktop and mobile
+## Template filters (the fun part)
+
+Lombik ships with a set of Jinja filters designed to keep your templates clean and expressive.
+
+### Dates & time handling
+
+Instead of formatting timestamps in Python, you do it directly in the template:
+
+{{ created_at | localtime }}        → 2026-05-19 05:15  
+{{ created_at | onlydate }}         → 2026-05-19  
+{{ created_at | onlytime }}         → 05:15  
+{{ created_at | shortdatetime }}    → May 19 05:15  
+
+Everything defaults to `localtime`, meaning UTC from the backend is automatically shown in the user’s timezone.
+
+Lombik expects the user’s timezone to be available via `g`.
+
+---
+
+### String helpers
+
+Make frontend display logic less painful:
+
+{{ g.user.full_name | proper }}
+
+john_doe → John Doe
+
+{{ g.user.first_name | possessive }}
+
+john → john's  
+lucas → lucas'  
+
+You can chain them:
+
+{{ g.user.full_name | proper | possessive }}
+
+john_doe → John Doe's  
+
+---
+
+## Installation
+
+pip install lombik
+
+---
+
+## Create a project
+
+lombik createapp myapp
+cd myapp
+flask run --debug
+
+This generates a full application structure so you can start immediately.
+
+---
+
+## Database setup
+
+Lombik uses MySQL by default.
+
+1. Update your `.env` with your database credentials  
+2. Initialize the database:
+
+flask initdb
+
+3. Create your admin user:
+
+flask superuser
+
+After that, you can log in and start building.
+
+Note: the auth system is intentionally simple. It’s meant for development scaffolding, not production security.
+
+---
+
+## Models
+
+When adding new models, don’t forget to register them:
+
+`models/__init__.py`
+
+Otherwise they won’t be picked up.
 

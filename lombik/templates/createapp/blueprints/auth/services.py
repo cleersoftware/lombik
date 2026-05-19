@@ -153,6 +153,7 @@ def load_user(user_id):
         User.username,
         User.email,
         User.role,
+        User.timezone,
         User.status,
         User.created_at
     ).filter_by(user_id=user_id).first()

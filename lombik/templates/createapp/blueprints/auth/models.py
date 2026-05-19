@@ -26,6 +26,12 @@ class User(db.Model):
         default="user"
     )
 
+    timezone = db.Column(
+        db.String(100),
+        nullable=False,
+        default="utc"
+    )
+
     status = db.Column(
         db.String(50),
         nullable=False,

@@ -4,9 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lombik"
-version = "0.1.0"
+version = "0.1.1"
+description = "Flask scaffold engine"
+authors = [
+    { name="David Plajner" }
+]
+readme = "README.md"
+
 dependencies = [
-    "click"
+    "Flask",
+    "Flask-SQLAlchemy",
+    "Flask-Migrate",
+    "Flask-WTF",
+    "Flask-Session",
+    "python-dotenv",
+    "click",
+    "SQLAlchemy",
+    "Werkzeug"
 ]
 
 [project.scripts]

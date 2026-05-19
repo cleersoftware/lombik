@@ -1,7 +1,8 @@
+from getpass import getpass
 from pathlib import Path
+import secrets
 import shutil
 import click
-import secrets
 
 
 BASE_DIR = Path(__file__).parent
@@ -57,7 +58,7 @@ def createapp(name):
     replace_placeholders(target, replacements)
 
     print(f"Created app: {name}")
-
+    
 
 if __name__ == "__main__":
     cli()

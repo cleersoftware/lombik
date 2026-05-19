@@ -21,11 +21,13 @@ def login():
         )
 
         if not res.success:
-            flash(genflash(res.message, "error"))
+            msg, cat = genflash(res.message, "error")
+            flash(msg ,cat)
             return redirect(url_for("auth_bp.login"))
         
         session["user_id"] = res.data["user_id"]
-        flash(genflash("Welcome", "chat"))
+        msg, cat = genflash("Welcome", "chat")
+        flash(msg, cat)
         return redirect(url_for("core_bp.home"))
 
     return render_template("auth/login.html")

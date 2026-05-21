@@ -68,11 +68,21 @@ pip install lombik
 
 ## Create a project
 
-lombik createapp myapp
-cd myapp
-flask run --debug
+1. `lombik createapp myapp`
+2. `cd myapp`
+3. `flask run --debug`
 
 This generates a full application structure so you can start immediately.
+To log in, you need a superuser account so you can exit the app and follow the next steps.
+
+---
+
+## Add modules
+
+1. `lombik module new_module`
+
+Creates a new module in blueprints that is registered automatically in app.py with the default file structure and a few core imports.
+The following names are prohibited by default: "core", "auth", "settings".
 
 ---
 
@@ -80,14 +90,14 @@ This generates a full application structure so you can start immediately.
 
 Lombik uses MySQL by default.
 
-1. Update your `.env` with your database credentials  
+1. Update your `.env` with your database credentials (at least dev for development)
 2. Initialize the database:
 
-flask initdb
+`flask initdb`
 
 3. Create your admin user:
 
-flask superuser
+`flask superuser`
 
 After that, you can log in and start building.
 

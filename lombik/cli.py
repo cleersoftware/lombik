@@ -8,6 +8,7 @@ import click
 BASE_DIR = Path(__file__).parent
 
 STARTUP_TEMPLATE = BASE_DIR / "templates" / "createapp"
+MODULE_TEMPLATE = BASE_DIR / "templates" / "module"
 
 
 @click.group()
@@ -59,6 +60,49 @@ def createapp(name):
 
     print(f"Created app: {name}")
     
+
+@cli.command()
+@click.argument("name")
+def module(name):
+    PROHIBITED_MODULE_NAMES = [
+        "core",
+        "auth",
+        "settings"
+    ]
+
+    if name in PROHIBITED_MODULE_NAMES:
+        print("This name is not allowed by default.")
+        return
+
+    current = Path.cwd()
+
+    blueprints_dir = None
+
+    for path in current.rglob("blueprints"):
+        if path.is_dir():
+            blueprints_dir = path
+            break
+
+    if not blueprints_dir:
+        print("No blueprints folder found.")
+        return
+
+    module_path = blueprints_dir / name
+
+    if module_path.exists():
+        print(f"Module '{name}' already exists.")
+        return
+
+    replacements = {
+        "{{ module_name }}": name
+    }
+
+    shutil.copytree(MODULE_TEMPLATE, module_path)
+
+    replace_placeholders(module_path, replacements)
+
+    print(f"Created module: {name}")
+
 
 if __name__ == "__main__":
     cli()

@@ -1,10 +1,12 @@
 from flask import Flask, g, session, render_template, send_from_directory, current_app
+from flask_wtf.csrf import CSRFError, generate_csrf
 from flask.cli import with_appcontext
-from flask_wtf.csrf import CSRFError
 from flask_wtf import CSRFProtect
 from flask_session import Session
 from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
+from pathlib import Path
+import importlib
 import time
 import os
 
@@ -12,11 +14,6 @@ from db import db, migrate
 
 from config import config_dict
 from models import load_models
-
-# import all your bleurpints here
-from blueprints.core.routes import core_bp
-from blueprints.auth.routes import auth_bp
-from blueprints.settings.routes import settings_bp
 
 load_dotenv()
 
@@ -37,6 +34,7 @@ def create_app(env="default"):
     _init_hooks(app)
     _init_routes(app)
     _init_error_handlers(app)
+    _init_hypermedia(app)
     
     return app
 
@@ -64,13 +62,30 @@ def _init_session_dir(app):
 
 
 def _init_blueprints(app):
-    app.register_blueprint(core_bp, url_prefix="/")
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(settings_bp, url_prefix="/settings")
+    import importlib
+    from pathlib import Path
+
+    blueprints_path = Path(__file__).parent / "blueprints"
+
+    for routes_file in blueprints_path.rglob("routes.py"):
+
+        rel_path = routes_file.relative_to(Path(__file__).parent)
+        module_path = ".".join(rel_path.with_suffix("").parts)
+
+        module = importlib.import_module(module_path)
+
+        for attr in dir(module):
+            if attr.endswith("_bp"):
+                bp = getattr(module, attr)
+
+                # special case: core is root. 
+                if bp.name == "core_bp":
+                    app.register_blueprint(bp, url_prefix="/")
+                else:
+                    app.register_blueprint(bp, url_prefix=f"/{bp.name}")
 
 
 def _init_hooks(app):
-    #app.before_request(load_user)
     app.before_request(_csrf_lifetime_tracker)
 
 
@@ -152,7 +167,7 @@ def _init_filters(app):
             return f"{s}'"
         return f"{s}'s"
     
-    
+
 
 def _init_routes(app):
 
@@ -160,6 +175,10 @@ def _init_routes(app):
     def manifest():
         return send_from_directory("static", "manifest.json")
 
+def _init_hypermedia(app):
+    @app.context_processor
+    def inject_csrf_token():
+        return {"csrf_token_value": generate_csrf()}
 
 def _init_error_handlers(app):
 

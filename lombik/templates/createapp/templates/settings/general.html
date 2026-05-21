@@ -5,15 +5,32 @@ Settings
 {% endblock %}
 
 {% block content %}
-<form
-    action="{{ url_for('auth_bp.logout') }}" 
-    method="POST"
-    class="text-sm flex gap-2 py-4">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" 
-    class="w-fit flex items-center gap-2 justify-center px-4 py-3 rounded-xl border border-gray-500 cursor-not-allowed">
-    <ion-icon name="log-out-outline" class="text-lg"></ion-icon>
-    Log out
-    </button>
-</form>
+<main class="relative py-4 px-12 w-full min-h-screen overflow-scroll scroll-smooth space-y-6">
+    <div class="">
+        <h1 class="text-xl font-semibold">Settings</h1>
+        <h2 class="text-xs text-primary uppercase tracking-[0.35em]">General information</h2>
+    </div>
+
+    <section id="timezoneSection">
+        <div class="space-y-2 w-fit">  
+            <p class="font-semibold">Change your timezone</p>
+            <select 
+                name="user_timezone"
+                hx-patch="{{ url_for('settings_bp.change_timezone') }}" 
+                hx-target="#timezoneErrorText"
+                hx-swap="innerHTML"
+                id="userTimezone" 
+                class="px-4 py-2 border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-xs rounded-lg">
+                {% for timezone in timezones %}
+                <option value="{{ timezone }}" {% if timezone == g.user.timezone %}selected{% endif %}>{{ timezone }}</option>
+                    
+                {% endfor %}
+            </select>
+            <div id="timezoneErrorText" class="text-xs font-light">
+
+            </div>
+        </div>
+
+    </section>
+</main>
 {% endblock %}

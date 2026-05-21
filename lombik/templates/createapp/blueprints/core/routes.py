@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, Blueprint, g
-from wrappers import login_required
+from wrappers import login_required, bgthread
 
 core_bp = Blueprint(
     "core_bp", 

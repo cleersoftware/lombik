@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lombik"
-version = "0.1.1"
+version = "0.1.2"
 description = "Flask scaffold engine"
 authors = [
     { name="David Plajner" }

@@ -16,6 +16,7 @@ class Error(db.Model):
     action = db.Column(db.String(100))
     error = db.Column(db.Text)
     traceback = db.Column(db.Text)
+    error_message = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=utc_now, index=True)
 
     user = db.relationship("User")

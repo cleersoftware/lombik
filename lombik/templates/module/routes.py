@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, Blueprint, g
+from flask import render_template, redirect, request, url_for, Blueprint, g
 from wrappers import login_required, bgthread
 
 {{ module_name }}_bp = Blueprint(

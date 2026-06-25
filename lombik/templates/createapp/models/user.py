@@ -8,7 +8,7 @@ def utc_now():
 class User(db.Model):
     __tablename__ = "users"
 
-    user_id = db.Column(
+    id = db.Column(
         db.String(36),
         primary_key=True,
         default=lambda: str(uuid.uuid4())
@@ -18,6 +18,18 @@ class User(db.Model):
         db.String(100),
         unique=True,
         nullable=False
+    )
+    
+    first_name = db.Column(
+        db.String(100)
+    )
+
+    last_name = db.Column(
+        db.String(100)
+    )
+
+    birthday = db.Column(
+        db.Date()
     )
 
     role = db.Column(

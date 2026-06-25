@@ -1,7 +1,7 @@
-from blueprints.auth.models import User
-from blueprints.core.models import Error
+from .error import Error
+from .user import User 
 
-def load_models():
+def register_models():
     """
     Import all models in here to be supplied in app.py
     """

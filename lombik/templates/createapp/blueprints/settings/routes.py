@@ -1,15 +1,9 @@
 from flask import render_template, redirect, url_for, Blueprint, g, request
 from zoneinfo import available_timezones
-from blueprints.auth.models import User
+from models import User
 from wrappers import login_required
 from db import db
-
-settings_bp = Blueprint(
-    "settings_bp", 
-    __name__, 
-    template_folder="templates",
-    static_folder="static"
-)
+from . import settings_bp
 
 @settings_bp.route("/settings")
 @login_required

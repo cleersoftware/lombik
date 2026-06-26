@@ -1,4 +1,5 @@
 from flask import g
+import re
 from datetime import datetime, timezone, timedelta
 
 def register_filters(app):
@@ -44,8 +45,15 @@ def register_filters(app):
     
     
     @app.template_filter("normalize")
-    def normalize(s):
-        return s.replace(" ", "_").lower()
+    def normalize(s: str):
+        if not s:
+            return ""
+
+        s = s.lower()
+        s = re.sub(r"[^a-z0-9_]+", "_", s)
+        s = re.sub(r"_+", "_", s)
+
+        return s.strip("_")
     
 
     @app.template_filter("possessive")

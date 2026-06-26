@@ -66,8 +66,7 @@ def createapp(name):
 def module(name):
     PROHIBITED_MODULE_NAMES = [
         "core",
-        "auth",
-        "settings"
+        "auth"
     ]
 
     if name in PROHIBITED_MODULE_NAMES:

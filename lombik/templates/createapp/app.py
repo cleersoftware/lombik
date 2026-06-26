@@ -1,9 +1,9 @@
 from flask import Flask
 from dotenv import load_dotenv
-from config import config_dict
 
+from lombik.configuration import register_config
 from lombik.filters import register_filters
-from lombik.cli import initialize
+from lombik.cli import register_cli
 from lombik.extensions import register_extensions
 from lombik.modules import register_blueprints
 from lombik.hooks import register_hooks
@@ -18,9 +18,8 @@ def create_app(env="default"):
     app = Flask(__name__, subdomain_matching=False)
     register_models()
 
-    _init_config(app, env)
-    # initialize(app)
-
+    register_config(app, env)
+    register_cli(app)
     register_blueprints(app)
     register_extensions(app)
     register_hooks(app)
@@ -28,18 +27,7 @@ def create_app(env="default"):
     register_filters(app)
     register_metadata(app)
 
-
     return app
-
-def _init_config(app, env):
-    cfg = config_dict[env]()
-
-    app.config.from_object(cfg)
-    app.config.update(
-        SECRET_KEY=cfg.SECRET_KEY,
-        CACHE_TYPE=cfg.CACHE_TYPE,
-        CACHE_DEFAULT_TIMEOUT=int(cfg.CACHE_DEFAULT_TIMEOUT),
-    )
 
 app = create_app()
 

@@ -1,17 +1,8 @@
-from flask import render_template, redirect, request, url_for, Blueprint, g
-from wrappers import login_required, bgthread
-
-{{ module_name }}_bp = Blueprint(
-    "{{ module_name }}_bp", 
-    __name__, 
-    template_folder="templates",
-    static_folder="static"
-)
+from flask import render_template
+from . import {{ module_name }}_bp
 
 @{{ module_name }}_bp.route("/")
-@login_required
-def main():
-    
+def home():
     context = {
         "selected": "{{ module_name }}",
     }

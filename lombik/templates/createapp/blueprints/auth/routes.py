@@ -1,15 +1,16 @@
 from flask import render_template, redirect, url_for, request, Blueprint, flash, session
+from lombik.auth import authenticate_user
+from lombik.extensions import limiter
 from tools import genflash
 from . import auth_bp
 
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def login():
     
     if request.method == 'POST':
-        from lombik.auth import authenticate_user
-
         res = authenticate_user(
             email=request.form.get("email", "").strip().lower(),
             password=request.form.get("password", "")

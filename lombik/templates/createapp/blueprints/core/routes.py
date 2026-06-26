@@ -1,6 +1,7 @@
 from . import core_bp
 from flask import render_template, redirect, url_for, g
-from wrappers import login_required, bgthread
+from lombik.wrappers import login_required, bgthread
+from lombik.extensions import limiter
 
 @core_bp.route("/")
 def home():

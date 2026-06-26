@@ -15,8 +15,7 @@ def db_initialized():
     except Exception:
         return False
 
-def initialize(app):
-
+def initialize_db(app):
     @app.cli.command("initdb")
     @with_appcontext
     def initdb():
@@ -38,7 +37,7 @@ def initialize(app):
 
         print("Database initialized.")
 
-
+def create_superuser(app):
     @app.cli.command("superuser")
     @with_appcontext
     def superuser():
@@ -75,3 +74,8 @@ def initialize(app):
 
         print("\nSuperuser created successfully.")
         print("\nRun 'flask run --debug' to start the app on localhost:5000.")
+
+
+def register_cli(app):
+    initialize_db(app)
+    create_superuser(app)

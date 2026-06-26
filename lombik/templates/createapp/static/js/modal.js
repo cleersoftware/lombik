@@ -1,36 +1,36 @@
-function openModal(modalId, el = null) {
-    const modal = document.getElementById(modalId)
+function openModal(modalId, data = {}) {
+    const modal = document.getElementById(modalId);
 
-    modal.classList.remove('hidden')
-    modal.classList.add('flex')
-    modal.addEventListener('click', closeOnBackdrop)
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 
-    if (el) {
-        Object.entries(el.dataset).forEach(([key, val]) => {
+    modal.addEventListener('click', closeOnBackdrop);
 
-            // fill inputs
-            const input = modal.querySelector(`[name="${key}"]`)
-            if (input) input.value = val
+    Object.entries(data).forEach(([key, val]) => {
 
-            // fill display
-            const display = modal.querySelector(`[data-field="${key}"]`)
-            if (display) display.textContent = val
-        })
-    }
+        // fill inputs
+        const input = modal.querySelector(`[name="${key}"]`);
+        if (input) input.value = val;
+
+        // fill display fields
+        const display = modal.querySelector(`[data-field="${key}"]`);
+        if (display) display.textContent = val;
+    });
 }
 
-
 function closeModal(modalId) {
-    const modal = document.getElementById(modalId)
-    modal.classList.add('hidden')
-    modal.classList.remove('flex')
+    const modal = document.getElementById(modalId);
 
-    modal.removeEventListener('click', closeOnBackdrop)
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    modal.removeEventListener('click', closeOnBackdrop);
 }
 
 function closeOnBackdrop(e) {
     if (e.target === e.currentTarget) {
-        e.currentTarget.classList.add('hidden')
-        e.currentTarget.classList.remove('flex')
+        e.currentTarget.classList.add('hidden');
+        e.currentTarget.classList.remove('flex');
+        e.currentTarget.removeEventListener('click', closeOnBackdrop);
     }
 }

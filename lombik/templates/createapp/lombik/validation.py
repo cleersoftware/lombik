@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from lombik.responses import Result
 from lombik.constants import ROLES
 from models import User

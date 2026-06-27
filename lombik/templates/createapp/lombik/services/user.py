@@ -18,7 +18,6 @@ def utc_now():
 def get_user_by_email(email: str) -> Optional[User]:
     if not email:
         return None
-
     return User.query.filter_by(email=email.strip().lower()).first()
 
 
@@ -124,7 +123,6 @@ def change_user_timezone(user_id: str, new_timezone: str) -> Result:
 
     if new_timezone not in available_timezones():
         return Result(success=False, data=None, message="Invalid timezone.")
-    
     if user.timezone == new_timezone:
         return Result(success=True, data=new_timezone, message="Timezone already set.")
 
@@ -135,5 +133,4 @@ def change_user_timezone(user_id: str, new_timezone: str) -> Result:
     except SQLAlchemyError:
         db.session.rollback()
         return Result(success=False, data=None, message="Timezone could not be changed.")
-    
     return Result(success=True, data={"new_timezone": new_timezone}, message="Timezone changed successfully.")

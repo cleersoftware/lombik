@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from lombik.responses import Result
 import secrets
 import hashlib
-from lombik.constants import ROLES, TOKEN_BYTES
+from lombik.constants import USER_ROLES, TOKEN_BYTES
 from models.user import User
 from db import db
 import uuid

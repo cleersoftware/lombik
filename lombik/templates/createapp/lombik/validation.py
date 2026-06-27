@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from lombik.responses import Result
-from lombik.constants import ROLES
+from lombik.constants import USER_ROLES
 from models import User
 import re
 
@@ -15,7 +15,7 @@ def valid_email_pattern(email: str) -> bool:
 
 
 def validate_role(role: str) -> bool:
-    return role.strip().lower() in {r.lower() for r in ROLES}
+    return role.strip().lower() in {r.lower() for r in USER_ROLES}
 
 
 def validate_password_strength(password: str) -> Result:

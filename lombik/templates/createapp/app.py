@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from lombik.configuration import register_config
 from lombik.filters import register_filters
-from lombik.cli import register_cli
+from lombik.commands import register_cli
 from lombik.extensions import register_extensions
 from lombik.modules import register_blueprints
 from lombik.hooks import register_hooks

@@ -80,6 +80,14 @@ class User(db.Model):
         db.DateTime(timezone=True)
     )
 
+    reset_token = db.Column(
+        db.String(128),
+    )
+
+    reset_token_expiry = db.Column(
+        db.DateTime(timezone=True)
+    )
+
     deactivated_at = db.Column(
         db.DateTime(timezone=True)
     )

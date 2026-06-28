@@ -1,4 +1,4 @@
 templates/createapp/migrations/
 templates/createapp/flask_sessions/
-templates/createapp/
 **/__pycache__/
+**/.DS_Store/

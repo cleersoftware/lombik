@@ -5,3 +5,4 @@
 .profile
 .bash_aliases
 .ssh/
+.DS_Store

@@ -5,7 +5,10 @@ from lombik.extensions import limiter
 
 
 
-@admin_bp.route("/controller")
+@admin_bp.route("/")
 @roles_required("admin", "superuser")
-def controller():
-    return "Admin panel"
+def admin():
+    context = {
+        "selected": "admin"
+    }
+    return render_template("admin/admin.html", **context)

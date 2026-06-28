@@ -11,14 +11,14 @@ def _csrf_lifetime_tracker():
     
 def _load_user(user_id):
     user = db.session.query(
-        User.user_id,
+        User.id,
         User.username,
         User.email,
         User.role,
         User.timezone,
         User.status,
         User.created_at
-    ).filter_by(user_id=user_id).first()
+    ).filter_by(id=user_id).first()
     if not user:
         return None
 

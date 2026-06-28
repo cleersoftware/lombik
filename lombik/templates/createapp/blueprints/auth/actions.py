@@ -2,6 +2,7 @@ from . import auth_bp
 from flask import request, redirect, url_for, session
 from lombik.auth import authenticate_user, logout_user
 from lombik.extensions import cache, limiter
+from lombik.responses import htmx_response
 from lombik.flash import Flash
 
 
@@ -15,11 +16,17 @@ def authenticate():
 
     if not res.success:
         Flash.error(res.message)
-        return redirect(url_for("auth_bp.login"))
+        return htmx_response(
+            html="",
+            redirect=url_for("auth_bp.login")
+        )
 
     session["user_id"] = res.data["user_id"]
     Flash.chat("Welcome!")
-    return redirect(url_for("core_bp.home"))
+    return htmx_response(
+        html="",
+        redirect=url_for("admin_bp.admin")
+    )
 
 
 @auth_bp.post("/logout")
@@ -28,7 +35,13 @@ def logout():
 
     if not res.success:
         Flash.error("Logout failed")
-        return redirect(url_for("core_bp.home"))
+        return htmx_response(
+            html="",
+            redirect=url_for("core_bp.home")
+        )
 
     Flash.ok("See you soon!")
-    return redirect(url_for("auth_bp.login"))
+    return htmx_response(
+        html="",
+        redirect=url_for("auth_bp.login")
+    )

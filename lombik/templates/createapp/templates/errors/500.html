@@ -1,1 +1,14 @@
-<h1>Damn</h1>
+{% extends 'base/base.html' %}
+
+{% block title %}500 - We've made an oopsie{% endblock %}
+
+{% block content %}
+<section class="w-full h-full flex flex-col items-center justify-center">
+    <h1 class="text-9xl text-primary font-bold">500</h1>
+    <h2 class="text-xl font-light">This is on us, we have made a mistake and we apologize.</h2>
+    <div class="w-full flex items-center justify-center gap-12 p-12">
+        <a href="{{ url_for('core_bp.home') }}" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Return home</a>
+        <a href="#" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Report issue</a>
+    </div>
+</section>
+{% endblock %}

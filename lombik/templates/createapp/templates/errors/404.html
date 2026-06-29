@@ -1,2 +1,14 @@
-<h1>Oopsie, page not found.</h1>
-<h2>Also, this needs to be re-designed</h2>
+{% extends 'base/base.html' %}
+
+{% block title %}404 - Page not or has been permanently moved{% endblock %}
+
+{% block content %}
+<section class="w-full h-full flex flex-col items-center justify-center">
+    <h1 class="text-9xl text-primary font-bold">404</h1>
+    <h2 class="text-xl font-light">Page not found or has been permanently moved</h2>
+    <div class="w-full flex items-center justify-center gap-12 p-12">
+        <a href="{{ url_for('core_bp.home') }}" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Return home</a>
+        <a href="#" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Report issue</a>
+    </div>
+</section>
+{% endblock %}

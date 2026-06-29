@@ -17,7 +17,6 @@ load_dotenv()
 def create_app(env="default"):
     app = Flask(__name__, subdomain_matching=False)
     register_models()
-
     register_config(app, env)
     register_cli(app)
     register_blueprints(app)

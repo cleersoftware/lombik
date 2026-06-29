@@ -1,2 +1,14 @@
-<h1>Session expired</h1>
-<h2>Also, this needs to be re-designed</h2>
+{% extends 'base/base.html' %}
+
+{% block title %}Session expired{% endblock %}
+
+{% block content %}
+<section class="w-full h-full flex flex-col items-center justify-center">
+    <h1 class="text-9xl text-primary font-bold">Session expired</h1>
+    <h2 class="max-w-lg text-xl font-light">No worries, we just care about your safety so we made sure to de-activate your session after a long break.</h2>
+    <div class="w-full flex items-center justify-center gap-12 p-12">
+        <!-- TIP: replace referrer with a proper solution from backend for your use case -->
+        <a href="{{ request.referrer or url_for('core_bp.home') }}" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Refresh session</a>
+    </div>
+</section>
+{% endblock %}

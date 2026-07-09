@@ -1,5 +1,5 @@
-from .error import Error
-from .user import User 
+from .errors import Error
+from .users import User 
 
 def register_models():
     """

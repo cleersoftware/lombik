@@ -63,6 +63,11 @@ Used for operations that modify data such as `POST`, `PUT`, `PATCH`, and `DELETE
 ## The toolkit
 
 Inside the lombik directory you'll find the engine of the application.
+There is a very light test coverage by default. 
+Custom commands to run tests:
+  - `lombik test` Run test in the current folder, by default it shall be ran from root
+  - `lombik test-report` Generates a coverage report in the terminal
+  - `lombik test-report-html` Generates an HTML report about the test coverage
 Here some of the default behaviors are defined and yo ucan change them to your liking.
 
 I leave it up to you to read through it and get familiar with the engine. With that said, I'd like to show some examples to display waht it's like to build with lombik.
@@ -121,7 +126,90 @@ In a single line like this you can format it:
 
 ---
 
-### There is more
+### Models
 
-But i don't have the time to write it now. I will finish this README at some point and make a detailed overview of what lombik has to offer.
+#### Create models
 
+You can create a model for example Client by using `lombik model client`
+This creates a file called clients.py with a class CLient. The table name and filename is always plural. 
+It also automatically injects it into the main model imports.
+
+
+
+#### Create relationships
+
+The `relate` command automatically generates SQLAlchemy relationships between two existing models in your Flask project.
+
+It handles:
+- Foreign key creation
+- Relationship creation
+- Back-populates linking
+- Naming conventions
+- Duplicate prevention
+
+---
+
+
+lombik relate user.id to client.user_id
+
+Creates:
+- Client.user_id → ForeignKey to User.id
+- Client.user relationship
+- User.clients reverse relationship
+
+---
+
+If fields are omitted, Lombik assumes:
+
+user → user.id  
+client → client.user_id
+
+---
+
+user_id = db.Column(
+    db.String(36),
+    db.ForeignKey("users.id"),
+    index=True
+)
+
+user = db.relationship(
+    "User",
+    back_populates="clients"
+)
+
+---
+
+clients = db.relationship(
+    "Client",
+    back_populates="user",
+    cascade="all, delete-orphan"
+)
+
+---
+
+- Table names are pluralized automatically
+- Relationship names follow:
+  - parent → plural(child)
+  - child → singular(parent)
+- Back-populates is always synchronized between both sides
+
+---
+
+- Existing columns are never overwritten
+- Existing relationships are never duplicated
+- Lombik only edits managed sections when available
+- Otherwise it appends safely to the class
+
+---
+
+**Recommended project structure**
+
+Use these markers in your models for best results:
+
+#### <LOMBIK:COLUMNS>
+#### </LOMBIK:COLUMNS>
+
+#### <LOMBIK:RELATIONSHIPS>
+#### </LOMBIK:RELATIONSHIPS>
+
+This ensures clean and predictable insertions.

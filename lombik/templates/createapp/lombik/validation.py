@@ -9,12 +9,36 @@ def utc_now():
     return datetime.now(timezone.utc)
 
 
+import re
+
 def valid_email_pattern(email: str) -> bool:
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return bool(re.match(pattern, email))
+    if not re.match(pattern, email):
+        return False
+
+    local, domain = email.split("@", 1)
+
+    if ".." in local or ".." in domain:
+        return False
+
+    if local.startswith(".") or local.endswith("."):
+        return False
+
+    if domain.startswith(".") or domain.endswith("."):
+        return False
+
+    if "." not in domain:
+        return False
+
+    if domain.endswith("-") or domain.startswith("-"):
+        return False
+
+    return True
 
 
 def validate_role(role: str) -> bool:
+    if role is None:
+        return False
     return role.strip().lower() in {r.lower() for r in USER_ROLES}
 
 

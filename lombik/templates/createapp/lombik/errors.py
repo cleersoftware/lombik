@@ -2,7 +2,7 @@ from werkzeug.exceptions import HTTPException
 from flask import render_template, g, request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf.csrf import CSRFError
-from models.error import Error
+from models import Error
 from db import db
 import traceback
 import json

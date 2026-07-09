@@ -6,7 +6,7 @@ from lombik.responses import Result
 import secrets
 import hashlib
 from lombik.constants import USER_ROLES, TOKEN_BYTES
-from models.user import User
+from models import User
 from db import db
 import uuid
 

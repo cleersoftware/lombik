@@ -1,5 +1,6 @@
 from flask import g
 import re
+from .strings import plural
 from datetime import datetime, timezone, timedelta
 
 def register_filters(app):
@@ -62,6 +63,13 @@ def register_filters(app):
             return ""
         return f"{s}'" if s.lower().endswith("s") else f"{s}'s"
     
+
+    @app.template_filter("pluralize")
+    def pluralize(s):
+        if not s:
+            return ""
+        return plural(s)
+
 
     @app.template_filter("timesince")
     def timesince(dt):

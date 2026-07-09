@@ -4,7 +4,7 @@ from zoneinfo import available_timezones
 from lombik.responses import Result
 from lombik.constants import USER_ROLES, USER_STATUSES, ADMIN_ROLES
 from datetime import datetime, timezone, timedelta
-from lombik.extensions import cache, limit
+from lombik.extensions import cache, limiter
 from typing import Optional
 from models import User
 from db import db
@@ -115,7 +115,7 @@ def change_user_role(user_id: str, new_role: str) -> Result:
     return Result(success=True, data=user, message=f"User role change to {new_role}")
 
 
-@limit.limiter("60 per minute")
+@limiter.limit("60 per minute")
 def change_user_timezone(user_id: str, new_timezone: str) -> Result:
     user = get_user_by_id(id=user_id)
     if not user:

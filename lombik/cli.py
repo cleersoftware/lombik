@@ -274,12 +274,17 @@ def relate(source):
 
 @cli.command()
 def superuser():
-    subprocess.run(["flask superuser"], check=False)
+    subprocess.run(["flask", "superuser"], check=False)
 
 
 @cli.command()
 def initdb():
-    subprocess.run(["flask initdb"], check=False)
+    subprocess.run(["flask", "initdb"], check=False)
+
+
+@cli.command()
+def run():
+    subprocess.run(["flask", "run", "--debug"], check=False)
 
 
 @cli.command()

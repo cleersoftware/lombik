@@ -15,7 +15,12 @@ MODEL_TEMPLATE = BASE_DIR / "templates" / "model_templates" / "template.py"
 PROHIBITED_MODULE_NAMES = {"core", "auth", "admin"}
 
 
+
 @click.group()
+@click.version_option(
+    version="2.0.4",
+    prog_name="lombik"
+)
 def cli():
     pass
 
@@ -283,6 +288,20 @@ def initdb():
 
 
 @cli.command()
+@click.option("-m", "--message", default="migration", help="Migration message")
+def db(message):
+    subprocess.run(
+        ["flask", "db", "migrate", "-m", message],
+        check=True
+    )
+
+    subprocess.run(
+        ["flask", "db", "upgrade"],
+        check=True
+    )
+
+
+@cli.command()
 def run():
     subprocess.run(["flask", "run", "--debug"], check=False)
 
@@ -328,7 +347,7 @@ def inject_foreign_key(file_path: Path, fk_column: str, parent_table: str, paren
         content = content.replace("# </LOMBIK:COLUMNS>", fk_line + "\n# </LOMBIK:COLUMNS>")
     else:
         # fallback: append inside class
-        content = content.replace("class ", "class ", 1)  # noop safety
+        content = content.replace("class ", "class ", 1)
         content += fk_line
 
     file_path.write_text(content)

@@ -41,3 +41,105 @@ html {
 .codefont {
   font-family: "JetBrains Mono", sans-serif;
 }
+
+.dragarea {
+  position: relative;
+}
+
+.dragable {
+  touch-action: none; /* let the engine own all pointer gestures, no native scroll/zoom fighting it */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.dragable.dragging {
+  cursor: grabbing;
+  opacity: 0.95;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.22), 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.dragable.drag-disabled,
+.dragable[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.drag-placeholder {
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 2px dashed rgba(99, 102, 241, 0.45);
+}
+
+body.dragengine-active {
+  cursor: grabbing;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+dropdown {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  min-width: 12rem;
+  max-width: calc(100vw - 2rem);
+  background: #f4f4f5;
+  border: 1px solid #d4d4d8;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); /* shadow-xl */
+  padding: 0.25rem 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.95);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+  pointer-events: none;
+}
+
+dropdown.dropdown-open {
+  display: block !important;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+dropdown a,
+dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #18181b;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 100ms;
+  white-space: nowrap;
+}
+
+dropdown a:hover,
+dropdown button:hover {
+  background-color: #e4e4e7;
+}
+
+dropdown hr {
+  border: none;
+  border-top: 1px solid #e4e4e7;
+  margin: 0.25rem 0;
+}
+
+dropdown > div {
+  padding: 0.5rem 1rem;
+}
+
+dropdown .text-muted,
+dropdown small {
+  color: #71717a;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding: 0.25rem 1rem;
+  display: block;
+}

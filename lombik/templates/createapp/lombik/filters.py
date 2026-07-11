@@ -10,10 +10,10 @@ def register_filters(app):
         if not dt:
             return None
 
-        tz = "UTC"
-        if getattr(g, "user", None):
-            tz = getattr(g.user, "timezone", "UTC")
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
 
+        tz = getattr(getattr(g, "user", None), "timezone", "UTC")
         return dt.astimezone(ZoneInfo(tz))
 
     def _fmt(dt, fmt):

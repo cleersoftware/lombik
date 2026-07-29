@@ -26,8 +26,18 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 html {
   scroll-behavior: smooth;
+}
+
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  outline: none;
+
 }
 
 .bookfont {
@@ -41,6 +51,11 @@ html {
 .codefont {
   font-family: "JetBrains Mono", sans-serif;
 }
+
+.cursivefont {
+  font-family: "Petit Formal Script", sans-serif;
+}
+
 
 .dragarea {
   position: relative;
@@ -78,16 +93,17 @@ body.dragengine-active {
   user-select: none;
 }
 
+
 dropdown {
   display: none;
   position: fixed;
-  z-index: 9999;
+  z-index: 9999 !important;
   min-width: 12rem;
   max-width: calc(100vw - 2rem);
   background: #f4f4f5;
   border: 1px solid #d4d4d8;
   border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); /* shadow-xl */
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
   padding: 0.25rem 0;
   overflow: hidden;
   opacity: 0;
@@ -122,7 +138,7 @@ dropdown button {
 
 dropdown a:hover,
 dropdown button:hover {
-  background-color: #e4e4e7;
+  background-color: #E8E5E0;
 }
 
 dropdown hr {

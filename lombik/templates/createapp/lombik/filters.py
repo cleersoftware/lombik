@@ -1,10 +1,15 @@
 from flask import g
 import re
 from .strings import plural
+from zoneinfo import ZoneInfo
+import json
 from datetime import datetime, timezone, timedelta
 
 def register_filters(app):
-    from zoneinfo import ZoneInfo
+    
+    @app.template_filter("json_nosort")
+    def json_nosort(j):
+        return json.dumps(j, indent=2, sort_keys=False)
 
     def _localize(dt):
         if not dt:

@@ -1,17 +1,13 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import extract
-from zoneinfo import available_timezones
 from lombik.responses import Result
-from lombik.constants import USER_ROLES, USER_STATUSES, ADMIN_ROLES
+from lombik.constants import USER_ROLES, USER_STATUSES, ADMIN_ROLES, TIMEZONES
 from datetime import datetime, timezone, timedelta
 from lombik.extensions import cache, limiter
+from lombik.utils import utc_now, utc_next_month
 from typing import Optional
 from models import User
 from db import db
-
-
-def utc_now():
-    return datetime.now(timezone.utc)
 
 
 @cache.memoize(timeout=30)
@@ -35,32 +31,26 @@ def get_user_by_username(username: str) -> Optional[User]:
     return User.query.filter_by(username=username.strip()).first()
 
 
-@cache.memoize(timeout=30)
 def get_all_users() -> list[User]:
     return User.query.all()
 
 
-@cache.memoize(timeout=30)
 def get_active_users() -> list[User]:
     return User.query.filter_by(status='active').all()
 
 
-@cache.memoize(timeout=30)
 def get_inactive_users() -> list[User]:
     return User.query.filter_by(status='inactive').all()
 
 
-@cache.memoize(timeout=30)
 def get_deleted_users() -> list[User]:
     return User.query.filter_by(status='deleted').all()
 
 
-@cache.memoize(timeout=30)
 def get_locked_out_users() -> list[User]:
     return User.query.filter(User.locked_until > utc_now()).all()
 
 
-@cache.memoize(timeout=600)
 def get_birthday_users() -> list[User]:
     return User.query.filter(
         extract('month', User.birthday) == datetime.today().month,
@@ -68,7 +58,6 @@ def get_birthday_users() -> list[User]:
     ).all()
 
 
-@cache.memoize(timeout=600)
 def get_users_active_since(days: int) -> list[User]:
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     return User.query.filter(User.last_seen >= cutoff).all()
@@ -100,28 +89,24 @@ def change_user_role(user_id: str, new_role: str) -> Result:
     if not user:
         return Result(success=False, data=None, message="User not found.")
     
-    if not is_admin(user):
-        return Result(success=False, data=None, message="No permission to change user role.")
-    
     new_role = new_role.lower().strip() 
     if new_role not in USER_ROLES:
         return Result(success=False, data=None, message="Invalid role.")
     
-    if new_role == user.status:
+    if new_role == user.role:
         return Result(success=True, data=user, message="User already has this role.")
 
-    user.status = new_role
+    user.role = new_role
     db.session.commit()
     return Result(success=True, data=user, message=f"User role change to {new_role}")
 
 
-@limiter.limit("60 per minute")
 def change_user_timezone(user_id: str, new_timezone: str) -> Result:
     user = get_user_by_id(id=user_id)
     if not user:
         return Result(success=False, data=None, message="User not found.")
 
-    if new_timezone not in available_timezones():
+    if new_timezone not in TIMEZONES:
         return Result(success=False, data=None, message="Invalid timezone.")
     if user.timezone == new_timezone:
         return Result(success=True, data=new_timezone, message="Timezone already set.")
@@ -134,3 +119,25 @@ def change_user_timezone(user_id: str, new_timezone: str) -> Result:
         db.session.rollback()
         return Result(success=False, data=None, message="Timezone could not be changed.")
     return Result(success=True, data={"new_timezone": new_timezone}, message="Timezone changed successfully.")
+
+
+def mark_user_as_deleted(user_id_to_delete: str, user_id_deleting: str):
+    """
+    Marks user as status = 'deleted' and sets delete_at field to 1 month from now.
+    There shall be a cron job that deletes all users where delete_at < today
+    """
+    deleter = get_user_by_id(user_id_deleting)
+
+    if deleter.role not in ADMIN_ROLES:
+        return Result(success=False, data=None, message="You are not allowed to delete users.")
+    
+    user_to_delete = get_user_by_id(user_id_to_delete)
+    user_to_delete.status = "deleted"
+    user_to_delete.deactivated_at = utc_now()
+    user_to_delete.delete_at = utc_next_month()
+    try:
+        db.session.add(user_to_delete)
+        db.session.commit()
+        return Result(success=True, data=None, message="User deleted successfully.")
+    except Exception as e:
+        return Result(success=False, data=None, message=f"User could not be deleted. Error: {e}")

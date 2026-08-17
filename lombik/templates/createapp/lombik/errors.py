@@ -18,17 +18,17 @@ def register_error_handlers(app):
     def not_found(e):
         return render_template("errors/404.html"), 404
 
-    # @app.errorhandler(Exception)
-    # def handle_exception(e):
-    #     if isinstance(e, HTTPException):
-    #         return e
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        if isinstance(e, HTTPException):
+            return e
 
-    #     log_error(
-    #         exception=e,
-    #         function=request.endpoint
-    #     )
+        log_error(
+            exception=str(e),
+            function=request.endpoint
+        )
 
-    #     return render_template("errors/500.html"), 500
+        return render_template("errors/500.html"), 500
 
 
 def log_error(exception, function=None, args=None, kwargs=None):
@@ -37,7 +37,7 @@ def log_error(exception, function=None, args=None, kwargs=None):
             user_id=getattr(g, "user", None).id if getattr(g, "user", None) else None,
             endpoint=request.endpoint,
             function=function or request.endpoint,
-            exception_type=type(exception).__name__,
+            exception_type=str(type(exception).__name__),
             message=str(exception),
             traceback=traceback.format_exc(),
             args=json.dumps(args, default=str) if args else None,

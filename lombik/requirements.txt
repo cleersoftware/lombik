@@ -13,3 +13,5 @@ pytest>=7.1.0
 pytest-cov>=7.1.0
 
 click>=8.1
+resend
+python-dateutil>=2.9.0

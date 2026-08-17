@@ -28,14 +28,16 @@ class User(db.Model):
         db.String(100)
     )
 
-    birthday = db.Column(
-        db.Date()
-    )
+    birthday = db.Column(db.Date)
 
     role = db.Column(
         db.String(50),
         nullable=False,
         default="user"
+    )
+
+    country = db.Column(
+        db.String(255)
     )
 
     timezone = db.Column(
@@ -80,11 +82,11 @@ class User(db.Model):
         db.DateTime(timezone=True)
     )
 
-    reset_token = db.Column(
-        db.String(128),
+    reset_token_hash = db.Column(
+        db.Text(),
     )
 
-    reset_token_expiry = db.Column(
+    reset_token_expires_at = db.Column(
         db.DateTime(timezone=True)
     )
 
@@ -92,6 +94,6 @@ class User(db.Model):
         db.DateTime(timezone=True)
     )
 
-    deleted_at = db.Column(
+    delete_at = db.Column(
         db.DateTime(timezone=True)
     )

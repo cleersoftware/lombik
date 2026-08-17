@@ -29,12 +29,12 @@ def register_filters(app):
     def localtimezone(dt):
         return _localize(dt)
 
-    @app.template_filter("onlydate")
-    def onlydate(dt):
+    @app.template_filter("dateonly")
+    def dateonly(dt):
         return _fmt(dt, "%Y-%m-%d")
 
-    @app.template_filter("onlytime")
-    def onlytime(dt):
+    @app.template_filter("timeonly")
+    def timeonly(dt):
         return _fmt(dt, "%H:%M")
 
     @app.template_filter("localtime")
@@ -123,3 +123,97 @@ def register_filters(app):
 
         years = round(diff / year)
         return f"{years} year{'s' if years != 1 else ''} ago"
+
+
+    @app.template_filter("timeuntil")
+    def timeuntil(dt):
+        """Time until a future event - exactly what you wanted!"""
+        if not dt or not isinstance(dt, datetime):
+            return ""
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        diff = (dt - now).total_seconds()
+
+        if diff < 0:
+            return "in the past"
+
+        if diff < 60:
+            return "just now"
+        if diff < 120:
+            return "in a minute"
+        if diff < 3600:
+            minutes = round(diff / 60)
+            return f"in {minutes} minute{'s' if minutes != 1 else ''}"
+        if diff < 7200:
+            return "in an hour"
+        if diff < 86400:
+            hours = round(diff / 3600)
+            return f"in {hours} hour{'s' if hours != 1 else ''}"
+        if diff < 172800:
+            return "tomorrow"
+        if diff < 2592000:
+            days = round(diff / 86400)
+            return f"in {days} day{'s' if days != 1 else ''}"
+        if diff < 31536000:
+            months = round(diff / 2592000)
+            return f"in {months} month{'s' if months != 1 else ''}"
+        
+        years = round(diff / 31536000)
+        return f"in {years} year{'s' if years != 1 else ''}"
+
+    @app.template_filter("formatnumber")
+    def formatnumber(value):
+        return f"{value:,}".replace(",", ".")
+
+
+    @app.template_filter("compactnumber")
+    def compactnumber(value):
+        if value < 1_000:
+            return str(value)
+        elif value < 1_000_000:
+            return f"{value / 1_000:g}K"
+        else:
+            return f"{value / 1_000_000:g}M"
+
+
+    @app.template_filter("wordcount")
+    def wordcount(s):
+        """Count words in string"""
+        if not s:
+            return 0
+        return len(s.split())
+
+
+    @app.template_filter("truncate")
+    def truncate(s, length=50, ellipsis="..."):
+        """Truncate string to max length"""
+        if not s or len(s) <= length:
+            return s
+        return s[:length].rsplit(" ", 1)[0] + ellipsis
+
+
+    @app.template_filter("sort_by")
+    def sort_by(lst, key):
+        """Sort list of dicts by a key"""
+        if not lst:
+            return []
+        return sorted(lst, key=lambda x: x.get(key, ""))
+
+    @app.template_filter("group_by")
+    def group_by(lst, key):
+        """Group list of dicts by a key"""
+        if not lst:
+            return {}
+        groups = {}
+        for item in lst:
+            group_key = item.get(key)
+            if group_key not in groups:
+                groups[group_key] = []
+            groups[group_key].append(item)
+        return groups
+    

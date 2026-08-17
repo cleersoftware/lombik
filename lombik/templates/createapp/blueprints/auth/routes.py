@@ -8,6 +8,23 @@ from lombik.flash import Flash
 def login():
     context = {
         "selected": "login",
-        "LoginForm": LoginForm()
+        "login_form": LoginForm()
     }
     return render_template("auth/login.html", **context)
+
+
+@auth_bp.get("/register")
+def register():
+    context = {
+        "selected": "register",
+        "register_form": RegisterForm()
+    }
+    return render_template("auth/register.html", **context)
+
+
+@auth_bp.get("/forgot_password")
+def forgot_password_page():
+    context = {
+        "selected": "forgot_password"
+    }
+    return render_template("auth/forgot_password.html", **context)

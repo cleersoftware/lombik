@@ -1,7 +1,15 @@
+from zoneinfo import available_timezones
+from lombik.utils import get_countries
+
+RESET_TOKEN_EXPIRY_MINUTES = 30
+PASSWORD_LOCKOUT_ATTEMPTS = 5
+PASSWORD_LOCKOUT_MINUTES = 10
 USER_STATUSES = ("active", "inactive", "deleted")
 USER_ROLES = ("user", "admin", "superuser", "system")
 ADMIN_ROLES = ("admin", "superuser")
 TOKEN_BYTES = 32
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+IMAGE_COMPRESSION_OVER_BYTES = 2 * 1024 * 1024 # 2MB 
 IRREGULAR = {
     "child": "children",
     "person": "people",
@@ -44,3 +52,5 @@ IRREGULAR = {
     "video": "videos",
     "studio": "studios",
 }
+TIMEZONES = available_timezones()
+COUNTRIES = get_countries()

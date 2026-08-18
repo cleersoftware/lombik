@@ -1,8 +1,11 @@
 from datetime import timedelta
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
 load_dotenv()
+
+ROOT = Path(__file__).resolve().parent.parent
 
 class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -40,12 +43,13 @@ class ConfigProd(BaseConfig):
 
 class ConfigTest(BaseConfig):
     SESSION_COOKIE_SECURE = False
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{os.getenv('DEV_MYSQL_USERNAME')}:"
-        f"{os.getenv('DEV_MYSQL_PASS')}@"
-        f"{os.getenv('DEV_MYSQL_HOST')}/"
-        f"{os.getenv('DEV_MYSQL_NAME')}"
-    )
+    # SQLALCHEMY_DATABASE_URI = (
+    #     f"mysql+pymysql://{os.getenv('DEV_MYSQL_USERNAME')}:"
+    #     f"{os.getenv('DEV_MYSQL_PASS')}@"
+    #     f"{os.getenv('DEV_MYSQL_HOST')}/"
+    #     f"{os.getenv('DEV_MYSQL_NAME')}"
+    # )
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{ROOT / 'dev.db'}"
 
 
 config_dict = {

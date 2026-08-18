@@ -15,6 +15,7 @@ def db_initialized():
     except Exception:
         return False
 
+
 def initialize_db(app):
     @app.cli.command("initdb")
     @with_appcontext
@@ -37,6 +38,7 @@ def initialize_db(app):
 
         print("Database initialized.")
 
+
 def create_superuser(app):
     @app.cli.command("superuser")
     @with_appcontext
@@ -53,6 +55,7 @@ def create_superuser(app):
 
         email = input("Email: ").strip().lower()
         username = input("Username: ").strip().lower()
+        country = input("Country: ").strip().lower()
 
         while True:
             pw = getpass("Password: ")
@@ -65,6 +68,7 @@ def create_superuser(app):
             username=username,
             email=email,
             role="superuser",
+            country=country,
             password=pw
         )
 

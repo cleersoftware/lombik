@@ -131,10 +131,6 @@ def plural(word: str) -> str:
     return word + "s"
 
 
-# ----------------------------------------------------------------------
-# SQLAlchemy injection helpers
-# ----------------------------------------------------------------------
-
 def ensure_db_import(file_path: Path):
     """Add `from app import db` if not already present."""
     content = file_path.read_text()
@@ -251,7 +247,7 @@ class {to_camel(table_name)}(db.Model):
 
 
 @click.group()
-@click.version_option(version="3.1.3", prog_name="lombik")
+@click.version_option(version="3.1.4", prog_name="lombik")
 def cli():
     pass
 

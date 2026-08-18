@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lombik"
-version = "3.1.1"
+version = "3.1.2"
 description = "Flask scaffold engine"
 authors = [
     { name="David Plajner" }
@@ -27,8 +27,12 @@ dependencies = [
     "pytest-cov",
     "resend",
     "python-dateutil"
-
 ]
 
 [project.scripts]
 lombik = "lombik.cli:cli"
+
+[tool.setuptools.package-data]
+lombik = [
+    "templates/**/*",
+]

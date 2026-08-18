@@ -254,7 +254,7 @@ class {to_camel(table_name)}(db.Model):
 # ----------------------------------------------------------------------
 
 @click.group()
-@click.version_option(version="2.0.4", prog_name="lombik")
+@click.version_option(version="3.1.0", prog_name="lombik")
 def cli():
     pass
 

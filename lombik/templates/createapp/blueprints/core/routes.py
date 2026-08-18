@@ -7,7 +7,7 @@ def home():
     from datetime import datetime, timezone
     context = {
         "selected": "home",
-        "version": "3.1.2",
+        "version": "3.1.3",
         "current_ts": datetime.now(timezone.utc)
     }
     return render_template("/core/home.html", **context)

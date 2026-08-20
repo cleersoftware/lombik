@@ -1,10 +1,7 @@
 from datetime import datetime, timezone
+from lombik.utils import utc_now
 from db import db
 import uuid
-
-
-def utc_now():
-    return datetime.now(timezone.utc)
 
 
 class Error(db.Model):

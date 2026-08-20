@@ -15,6 +15,7 @@ def _load_user(user_id):
         User.username,
         User.email,
         User.role,
+        User.country,
         User.timezone,
         User.status,
         User.created_at

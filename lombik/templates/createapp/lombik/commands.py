@@ -77,8 +77,22 @@ def create_superuser(app):
             return
 
         print("\nSuperuser created successfully.")
-        print("\nRun 'flask run --debug' to start the app on localhost:5000.")
 
+        print("\nRun 'lombik run' to start the app on localhost:5000.")
+
+        print("\nRun 'lombik module <module_name eg.: admin>' to create new module inside your bluerpints.")
+
+        print("\nRun 'lombik model <model_name (singular) e.g: Tenant>' to create a new model and register it.")
+
+        print("\nCreate relationships between models with a single command.")
+
+        print("The meain idea is: lombik relate parent.field to child.field [one-to-many|many-to-one|one-to-one|many-to-many] [--lazy LAZY]")
+        print("Here is what that looks like in practice:")
+
+        print("\nlombik relate tenant.id to user.tenant_id one-to-many")
+        print("lombik relate user.tenant_id to tenant.id many-to-one")
+        print("lombik relate tenant.id to setting.tenant_id one-to-one")
+        print("lombik relate user.id to role.user_id many-to-many")
 
 def register_cli(app):
     initialize_db(app)

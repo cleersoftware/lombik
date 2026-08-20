@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
+from lombik.utils import utc_now
 from db import db
 import uuid
 
-def utc_now():
-    return datetime.now(timezone.utc)
 
 class {{ ModelName }}(db.Model):
     __tablename__ = "{{ model_name }}"
@@ -20,3 +19,5 @@ class {{ ModelName }}(db.Model):
         db.DateTime(timezone=True),
         default=utc_now
     )
+
+    # <LOMBIK:RELATIONSHIPS>

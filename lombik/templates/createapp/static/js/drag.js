@@ -1,90 +1,108 @@
 /*!
- * DragEngine v1.2.0
+ * DragEngine v2.0.0
  * A dependency-free drag & drop / sortable engine built on Pointer Events.
  * ---------------------------------------------------------------------
- * MARKUP CONTRACT
- *   <div class="dragarea">              <-- parent / drop zone
- *     <div class="dragable">...</div>   <-- draggable item
- *     <div class="dragable">...</div>
- *   </div>
+ * HOW TO USE
+ * ---------------------------------------------------------------------
+ * 1. DROP ZONES
+ *    <dragarea family="animals" field="category" value="land"></dragarea>
+ *    Or use a div:
+ *    <div class="dragarea" data-family="animals" data-field="category" data-value="land"></div>
  *
- * MODIFIER CLASSES (put these on the .dragarea)
- *   .showgap   Animates siblings sliding out of the way and shows a
- *              placeholder "gap" where the dragged item will land
- *              (a FLIP animation). Without it, reordering is instant.
- *   .snap      Treats children as fixed slots (grid / kanban style).
- *              Dragging near a slot swaps directly into it instead of
- *              shifting every other item. Pairs great with CSS Grid.
- *   .ordered   Same swap behaviour as .snap: the dragged item and the
- *              item you drop it on trade places 1-for-1, nothing else
- *              reflows. Use whichever of .snap/.ordered reads better
- *              in your markup - they are equivalent.
- *   (none)     Default = "insert" mode, classic list reordering:
- *              siblings shift to make room, no animation.
+ *    - `family` allows dragging between different dragareas with the same family.
+ *    - `field` / `value` are sent to htmx as dynamic payload keys.
  *
- * MODIFIER CLASSES (put these on the .dragable)
- *   .dragfree          The item becomes a free‑floating element. It can
- *                      be placed anywhere on the screen; no list, no
- *                      placeholder, no snapping. Position resets on reload.
- *   .dragfree-save     Like .dragfree, but the final screen position is
- *                      saved to localStorage and restored on page load.
- *                      Requires a unique `data-dragfree-id` attribute.
+ * 2. DRAGGABLE ITEMS
+ *    <div class="dragable" data-id="101">Aardvark</div>
+ *    `.draggable` is also supported as an alias for `.dragable`.
  *
- * DATA ATTRIBUTES
- *   data-group="name"     on .dragarea   Allows dragging *between*
- *                          different .dragarea elements that share the
- *                          same group name. Omit it to lock an item to
- *                          its own list (default & safest behaviour).
- *   data-handle=".sel"    on .dragable (or the .dragarea, as a
- *                          fallback default for all its children)
- *                          Restricts drag-start to elements matching
- *                          the selector inside the item, e.g. a small
- *                          drag handle icon.
- *   data-dragfree-id      on .dragfree-save   Unique ID for localStorage
- *                          storage (any string, e.g. "logout-btn").
+ * 3. FREE-FLOATING ELEMENTS
+ *    <dragfree id="my-widget">...</dragfree>
+ *    - If `id` or `data-dragfree-id` is present, position is saved to localStorage.
+ *    - Double-click a free element to reset it to its original position.
  *
- * STATE CLASSES (added/removed automatically, style them if you like)
- *   .dragable.dragging          the item currently being dragged
- *   .dragable.drag-disabled     add this yourself to lock an item
- *   .drag-placeholder           the "landing spot" stand-in element
- *   body.dragengine-active      set on <body> for the drag's duration
+ * 4. HTMX INTEGRATION
+ *    Put hx-patch / hx-post / hx-put / hx-delete on the <dragarea>.
+ *    Example:
+ *      <dragarea family="animals"
+ *                hx-patch="/update-animal-category"
+ *                hx-vals='{"csrf_token": "{{ csrf_token }}"}'
+ *                field="category"
+ *                value="land">
+ *    When a drop changes something, DragEngine automatically calls:
+ *      htmx.ajax(PATCH, endpoint, {
+ *        target: area,
+ *        swap: area.getAttribute('hx-swap') || 'none',
+ *        values: {
+ *          id: item.dataset.id,             // from dragged item
+ *          category: "land",                // field / value from target area
+ *          from_index: 0,
+ *          to_index: 1,
+ *          from_field: "category",
+ *          from_value: "water"
+ *        }
+ *      })
+ *    Static hx-vals (like csrf_token) are merged automatically by htmx.
  *
- * RESET BEHAVIOUR
- *   Double‑click any .dragfree-save element to reset it to its original
- *   position and clear the saved data from localStorage.
- *   Or call DragEngine.resetFree(elementOrId) programmatically.
+ * 5. MODIFIERS
+ *    Add to <dragarea> (classes or attributes both work):
+ *      showgap  → animated FLIP reordering
+ *      snap     → swap slots instead of shifting
+ *      ordered  → same as snap
  *
- * EVENTS (all bubble, all dispatched on the relevant .dragarea)
- *   dragengine:start   { item, from:{area,index} }
- *   dragengine:end     { item, from, to, changed }
- *   dragengine:sort     same shape as :end, only fired when the order
- *                        actually changed (i.e. a real drop happened)
+ * 6. DRAG HANDLE
+ *    Add `handle=".drag-handle"` to an item or area.
  *
- * PUBLIC API
- *   DragEngine.init(root)        wire up delegated listeners on `root`
- *   DragEngine.cancel()          abort an in-progress drag programmatically
- *   DragEngine.resetFree(id)     reset a saved free element to its
- *                                original position (pass the element or
- *                                the data-dragfree-id string)
+ * 7. PUBLIC API
+ *    DragEngine.init(root)      wire delegated listeners
+ *    DragEngine.cancel()        abort an in-progress drag
+ *    DragEngine.resetFree(id)   reset a saved free element
+ *
+ * STATE CLASSES
+ *    .dragging                  current dragged item
+ *    body.dragengine-active     active drag session
  * ---------------------------------------------------------------------
  */
 (function (global) {
   'use strict';
 
-  var THRESHOLD = 4; // px of movement before a pointerdown becomes a drag
-  var FLIP_MS = 220; // sibling slide animation duration
+  var THRESHOLD = 4;
+  var FLIP_MS = 220;
 
   var initializedRoots = new WeakSet();
   var pending = null;
   var drag = null;
 
-  // ---------------------------------------------------------------
-  // small dom helpers
-  // ---------------------------------------------------------------
+  var AREA_SELECTOR = 'dragarea, .dragarea';
+  var ITEM_SELECTOR = '.dragable, .draggable, dragfree, .dragfree, .dragfree-save';
+
+  var RESET_STYLES = [
+    'position', 'left', 'top', 'width', 'height', 'margin',
+    'zIndex', 'pointerEvents', 'willChange', 'transition', 'transform'
+  ];
+  var FREE_KEEP_STYLES = [
+    'width', 'height', 'margin', 'zIndex', 'pointerEvents',
+    'willChange', 'transition', 'transform'
+  ];
+
+  function isItem(el) {
+    return el && el.matches && el.matches(ITEM_SELECTOR);
+  }
+
+  function isFree(el) {
+    return el && el.matches && el.matches(
+      'dragfree, .dragfree, .dragfree-save, .dragable.dragfree, .draggable.dragfree, .dragable.dragfree-save, .draggable.dragfree-save'
+    );
+  }
+
+  function findArea(el) {
+    return el.closest ? el.closest(AREA_SELECTOR) : null;
+  }
 
   function trackedChildren(area) {
     return Array.prototype.filter.call(area.children, function (el) {
-      return el.classList.contains('dragable') || el.classList.contains('drag-placeholder');
+      if (el.classList.contains('drag-placeholder')) return true;
+      return isItem(el) && !isFree(el);
     });
   }
 
@@ -92,12 +110,16 @@
     return trackedChildren(area).indexOf(node);
   }
 
+  function hasModifier(area, name) {
+    return area.classList.contains(name) || area.hasAttribute(name);
+  }
+
   function getMode(area) {
-    return area.classList.contains('snap') || area.classList.contains('ordered') ? 'swap' : 'insert';
+    return (hasModifier(area, 'snap') || hasModifier(area, 'ordered')) ? 'swap' : 'insert';
   }
 
   function isAnimated(area) {
-    return area.classList.contains('showgap');
+    return hasModifier(area, 'showgap');
   }
 
   function getAxis(area) {
@@ -113,14 +135,21 @@
     return 'y';
   }
 
-  function isCompatible(area) {
-    if (area === drag.originArea) return true;
-    var g1 = drag.originArea ? drag.originArea.dataset.group : null;
-    var g2 = area.dataset.group;
-    return !!g1 && g1 === g2;
+  function getFamily(area) {
+    return area.getAttribute('family') ||
+           area.dataset.family ||
+           area.getAttribute('data-group') ||
+           area.dataset.group ||
+           null;
   }
 
-  // FLIP
+  function isCompatible(area) {
+    if (area === drag.originArea) return true;
+    var f1 = drag.originArea ? getFamily(drag.originArea) : null;
+    var f2 = getFamily(area);
+    return !!f1 && f1 === f2;
+  }
+
   function captureRects(area) {
     var map = new Map();
     trackedChildren(area).forEach(function (el) {
@@ -139,8 +168,7 @@
       if (!dx && !dy) return;
       el.style.transition = 'none';
       el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-      // eslint-disable-next-line no-unused-expressions
-      el.offsetHeight;
+      void el.offsetHeight;
       requestAnimationFrame(function () {
         el.style.transition = 'transform ' + FLIP_MS + 'ms cubic-bezier(.2,.8,.2,1)';
         el.style.transform = '';
@@ -156,23 +184,24 @@
     var parentA = a.parentNode;
     var parentB = b.parentNode;
     if (!parentA || !parentB) return;
-    var markerA = document.createComment('');
-    parentA.insertBefore(markerA, a);
+    var marker = document.createComment('');
+    parentA.insertBefore(marker, a);
     parentB.insertBefore(a, b);
-    parentA.insertBefore(b, markerA);
-    parentA.removeChild(markerA);
+    parentA.insertBefore(b, marker);
+    parentA.removeChild(marker);
   }
 
-  // ---------------------------------------------------------------
-  // localStorage helpers for dragfree-save
-  // ---------------------------------------------------------------
+  function getFreeId(item) {
+    return item.id || item.getAttribute('data-dragfree-id') || null;
+  }
+
   function getStorageKey(id) {
     return 'dragfree-pos-' + id;
   }
 
   function savePosition(item) {
-    if (!item.classList.contains('dragfree-save')) return;
-    var id = item.getAttribute('data-dragfree-id');
+    if (!isFree(item)) return;
+    var id = getFreeId(item);
     if (!id) return;
     try {
       localStorage.setItem(getStorageKey(id), JSON.stringify({
@@ -183,8 +212,8 @@
   }
 
   function clearSavedPosition(item) {
-    if (!item.classList.contains('dragfree-save')) return;
-    var id = item.getAttribute('data-dragfree-id');
+    if (!isFree(item)) return;
+    var id = getFreeId(item);
     if (!id) return;
     try {
       localStorage.removeItem(getStorageKey(id));
@@ -192,82 +221,95 @@
   }
 
   function restoreDragFreePositions() {
-    var items = document.querySelectorAll('.dragable.dragfree-save[data-dragfree-id]');
+    var items = document.querySelectorAll(ITEM_SELECTOR);
     for (var i = 0; i < items.length; i++) {
       var el = items[i];
-      var id = el.getAttribute('data-dragfree-id');
+      if (!isFree(el)) continue;
+      var id = getFreeId(el);
+      if (!id) continue;
       try {
         var raw = localStorage.getItem(getStorageKey(id));
-        if (raw) {
-          var pos = JSON.parse(raw);
-          if (pos && typeof pos.left === 'string' && typeof pos.top === 'string') {
-            el.style.position = 'fixed';
-            el.style.left = pos.left;
-            el.style.top = pos.top;
-            // Keep other styles intact; we only set fixed and coordinates.
-          }
+        if (!raw) continue;
+        var pos = JSON.parse(raw);
+        if (pos && typeof pos.left === 'string' && typeof pos.top === 'string') {
+          el.style.position = 'fixed';
+          el.style.left = pos.left;
+          el.style.top = pos.top;
         }
-      } catch (e) { /* ignore invalid data */ }
+      } catch (e) { /* ignore */ }
     }
   }
 
-  /**
-   * Reset a free‑saved element to its original DOM position.
-   * @param {Element|string} elOrId - The element or data-dragfree-id.
-   */
+  function setItemFixed(item, rect) {
+    item.style.position = 'fixed';
+    item.style.left = rect.left + 'px';
+    item.style.top = rect.top + 'px';
+    item.style.width = rect.width + 'px';
+    item.style.height = rect.height + 'px';
+    item.style.margin = '0';
+    item.style.zIndex = '9999';
+    item.style.pointerEvents = 'none';
+    item.style.willChange = 'transform, left, top';
+  }
+
+  function clearInlineStyles(item) {
+    RESET_STYLES.forEach(function (p) {
+      item.style[p] = '';
+    });
+  }
+
+  function clearFreeStyles(item) {
+    FREE_KEEP_STYLES.forEach(function (p) {
+      item.style[p] = '';
+    });
+  }
+
   function resetFree(elOrId) {
     var el;
     if (typeof elOrId === 'string') {
-      el = document.querySelector('.dragfree-save[data-dragfree-id="' + elOrId + '"]');
+      el = document.getElementById(elOrId) ||
+           document.querySelector('[data-dragfree-id="' + elOrId + '"]');
     } else if (elOrId instanceof Element) {
       el = elOrId;
     }
-    if (!el || !el.classList.contains('dragfree-save')) return;
+    if (!el || !isFree(el)) return;
 
-    // Clear stored position
     clearSavedPosition(el);
 
-    // Remove all inline styles that the engine added, letting CSS take over
-    ['position', 'left', 'top', 'width', 'height', 'margin', 'zIndex', 'pointerEvents', 'willChange'].forEach(function (p) {
-      el.style[p] = '';
-    });
-    // Also remove the .dragging class just in case
-    el.classList.remove('dragging');
+    if (el.parentNode === document.body && el._dragfreeOriginParent) {
+      var origParent = el._dragfreeOriginParent;
+      var origNext = el._dragfreeOriginNextSibling;
+      if (origNext && origNext.parentNode === origParent) {
+        origParent.insertBefore(el, origNext);
+      } else if (origParent) {
+        origParent.appendChild(el);
+      }
+      delete el._dragfreeOriginParent;
+      delete el._dragfreeOriginNextSibling;
+    }
 
-    // If the element was moved to <body> during a previous drag, we need to put it back.
-    // The engine's cancel function does that, but we can replicate the logic:
-    // Actually, after a drop, the free element stays in <body>. To truly "reset",
-    // we should return it to its original parent. However, we didn't store the original
-    // parent on drop. We can store it at drag start. Let's add that.
-    // Since we now store `freeOriginParent` and `freeOriginNextSibling` in the drag object,
-    // we need to preserve them after drop. We'll add a data attribute to remember the origin.
-    // Simpler: we can just remove the element from <body> and re-insert it at its
-    // original location if we know it. But we didn't save that on drop.
-    //
-    // For v1.2, we'll do a more reliable reset: store the original parent & next sibling
-    // on the element itself via data attributes when dragging starts. Then on reset,
-    // we can use those to move it back.
-    //
-    // We'll implement that in the drag lifecycle.
+    clearInlineStyles(el);
+    el.classList.remove('dragging');
   }
 
-  // ---------------------------------------------------------------
-  // drag lifecycle
-  // ---------------------------------------------------------------
 
   function onPointerDown(e) {
     if (drag || pending) return;
     if (e.button !== undefined && e.button !== 0) return;
 
-    var item = e.target.closest('.dragable');
+    var item = e.target.closest ? e.target.closest(ITEM_SELECTOR) : null;
     if (!item) return;
 
-    var area = item.closest('.dragarea');
-    if (!area && !item.classList.contains('dragfree')) return;
+    var area = findArea(item);
+    if (!area && !isFree(item)) return;
 
-    if (item.classList.contains('drag-disabled') || item.getAttribute('aria-disabled') === 'true') return;
+    if (item.classList.contains('drag-disabled') ||
+        item.getAttribute('aria-disabled') === 'true') return;
 
-    var handleSel = item.dataset.handle || (area ? area.dataset.handle : null);
+    var handleSel = item.getAttribute('data-handle') ||
+                    item.getAttribute('handle') ||
+                    (area ? area.getAttribute('data-handle') || area.getAttribute('handle') : null);
+
     if (handleSel) {
       if (!e.target.closest(handleSel)) return;
     } else if (e.target.closest('input, textarea, select, button, a[href], [contenteditable="true"]')) {
@@ -283,7 +325,7 @@
       startY: e.clientY,
       offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
-      rect: rect,
+      rect: rect
     };
 
     document.addEventListener('pointermove', onPointerMove);
@@ -319,22 +361,29 @@
     finishDrag();
   }
 
+  function suppressClick(item) {
+    item.addEventListener('click', function (ce) {
+      ce.preventDefault();
+      ce.stopPropagation();
+    }, { capture: true, once: true });
+  }
+
   function beginDrag(p, e) {
     var item = p.item;
     var area = p.area;
     var rect = p.rect;
-    var isFree = item.classList.contains('dragfree');
+    var free = isFree(item);
 
-    if (isFree) {
-      // Store original DOM position for later reset
-      var origParent = item.parentNode;
-      var origNext = item.nextSibling;
-      // Use data attributes to persist across moves (we'll set them on the element)
-      item.setAttribute('data-dragfree-orig-parent', ''); // can't store object, store reference? No.
-      // Instead, we'll store the parent's identity by marking a unique attribute. Better: just rely on the fact that we'll always keep the element in <body> after drag, and we'll store the original parent as a property on the element itself.
-      // Simple: store original parent and next sibling as expando properties.
-      item._dragfreeOrigParent = origParent;
-      item._dragfreeOrigNext = origNext;
+    if (free) {
+      if (!item._dragfreeOriginParent) {
+        item._dragfreeOriginParent = item.parentNode;
+        item._dragfreeOriginNextSibling = item.nextSibling;
+      }
+
+      document.body.appendChild(item);
+      setItemFixed(item, rect);
+      item.classList.add('dragging');
+      document.body.classList.add('dragengine-active');
 
       drag = {
         pointerId: p.pointerId,
@@ -347,41 +396,20 @@
         pointerX: e.clientX,
         pointerY: e.clientY,
         rafId: null,
-        free: true,
-        freeOriginParent: origParent,
-        freeOriginNextSibling: origNext,
+        free: true
       };
 
-      document.body.appendChild(item);
-      Object.assign(item.style, {
-        position: 'fixed',
-        left: rect.left + 'px',
-        top: rect.top + 'px',
-        width: rect.width + 'px',
-        height: rect.height + 'px',
-        margin: '0',
-        zIndex: '9999',
-        pointerEvents: 'none',
-        willChange: 'transform, left, top',
-      });
-      item.classList.add('dragging');
-      document.body.classList.add('dragengine-active');
+      suppressClick(item);
 
-      item.addEventListener('click', function (ce) {
-        ce.preventDefault();
-        ce.stopPropagation();
-      }, { capture: true, once: true });
-
-      document.body.dispatchEvent(new CustomEvent('dragengine:start', {
+      item.dispatchEvent(new CustomEvent('dragengine:start', {
         bubbles: true,
-        detail: { item: item, from: { area: null, index: -1 } },
+        detail: { item: item, from: { area: null, index: -1 } }
       }));
 
       loop();
       return;
     }
 
-    // Normal list mode
     var placeholder = document.createElement('div');
     placeholder.className = 'drag-placeholder';
     placeholder.style.width = rect.width + 'px';
@@ -389,17 +417,7 @@
     area.insertBefore(placeholder, item);
 
     document.body.appendChild(item);
-    Object.assign(item.style, {
-      position: 'fixed',
-      left: rect.left + 'px',
-      top: rect.top + 'px',
-      width: rect.width + 'px',
-      height: rect.height + 'px',
-      margin: '0',
-      zIndex: '9999',
-      pointerEvents: 'none',
-      willChange: 'transform, left, top',
-    });
+    setItemFixed(item, rect);
     item.classList.add('dragging');
     document.body.classList.add('dragengine-active');
 
@@ -414,17 +432,14 @@
       pointerX: e.clientX,
       pointerY: e.clientY,
       rafId: null,
-      free: false,
+      free: false
     };
 
-    item.addEventListener('click', function (ce) {
-      ce.preventDefault();
-      ce.stopPropagation();
-    }, { capture: true, once: true });
+    suppressClick(item);
 
     area.dispatchEvent(new CustomEvent('dragengine:start', {
       bubbles: true,
-      detail: { item: item, from: { area: area, index: drag.originIndex } },
+      detail: { item: item, from: { area: area, index: drag.originIndex } }
     }));
 
     loop();
@@ -432,11 +447,9 @@
 
   function loop() {
     if (!drag) return;
-    drag.item.style.left = drag.pointerX - drag.offsetX + 'px';
-    drag.item.style.top = drag.pointerY - drag.offsetY + 'px';
-    if (!drag.free) {
-      updateHitTest();
-    }
+    drag.item.style.left = (drag.pointerX - drag.offsetX) + 'px';
+    drag.item.style.top = (drag.pointerY - drag.offsetY) + 'px';
+    if (!drag.free) updateHitTest();
     drag.rafId = requestAnimationFrame(loop);
   }
 
@@ -444,20 +457,20 @@
     var el = document.elementFromPoint(drag.pointerX, drag.pointerY);
     if (!el) return;
 
-    var area = el.closest('.dragarea');
+    var area = el.closest ? el.closest(AREA_SELECTOR) : null;
     if (!area || !isCompatible(area)) return;
 
-    var targetChild = el.closest('.dragable, .drag-placeholder');
+    var targetChild = el.closest ? el.closest(ITEM_SELECTOR + ', .drag-placeholder') : null;
     if (targetChild === drag.item) return;
 
     if (!targetChild) {
       if (area !== drag.placeholder.parentNode) {
-        var animated = isAnimated(area);
-        var originAnimated = isAnimated(drag.placeholder.parentNode);
-        var rectsHere = animated ? captureRects(area) : null;
-        var rectsOrigin = originAnimated ? captureRects(drag.placeholder.parentNode) : null;
+        var animatedTarget = isAnimated(area);
+        var animatedOrigin = isAnimated(drag.placeholder.parentNode);
+        var rectsTarget = animatedTarget ? captureRects(area) : null;
+        var rectsOrigin = animatedOrigin ? captureRects(drag.placeholder.parentNode) : null;
         area.appendChild(drag.placeholder);
-        playFlip(rectsHere);
+        playFlip(rectsTarget);
         playFlip(rectsOrigin);
       }
       return;
@@ -468,8 +481,12 @@
     var mode = getMode(area);
     var animated2 = isAnimated(area);
     var crossArea = drag.placeholder.parentNode !== area;
-    var rectsTarget = animated2 || (crossArea && isAnimated(drag.placeholder.parentNode)) ? captureRects(area) : null;
-    var rectsOriginArea = crossArea && isAnimated(drag.placeholder.parentNode) ? captureRects(drag.placeholder.parentNode) : null;
+    var rectsTarget = (animated2 || (crossArea && isAnimated(drag.placeholder.parentNode)))
+      ? captureRects(area)
+      : null;
+    var rectsOrigin = (crossArea && isAnimated(drag.placeholder.parentNode))
+      ? captureRects(drag.placeholder.parentNode)
+      : null;
 
     if (mode === 'swap') {
       swapNodes(drag.placeholder, targetChild);
@@ -477,61 +494,50 @@
       var axis = getAxis(area);
       var r = targetChild.getBoundingClientRect();
       var before;
+
       if (axis === 'x') {
         before = drag.pointerX < r.left + r.width / 2;
       } else if (axis === 'grid') {
         var cy = r.top + r.height / 2;
-        if (Math.abs(drag.pointerY - cy) > r.height * 0.25) {
-          before = drag.pointerY < cy;
-        } else {
-          before = drag.pointerX < r.left + r.width / 2;
-        }
+        before = (Math.abs(drag.pointerY - cy) > r.height * 0.25)
+          ? (drag.pointerY < cy)
+          : (drag.pointerX < r.left + r.width / 2);
       } else {
         before = drag.pointerY < r.top + r.height / 2;
       }
+
       if (before) area.insertBefore(drag.placeholder, targetChild);
       else area.insertBefore(drag.placeholder, targetChild.nextSibling);
     }
 
     playFlip(rectsTarget);
-    playFlip(rectsOriginArea);
+    playFlip(rectsOrigin);
   }
 
   function finishDrag() {
     cancelAnimationFrame(drag.rafId);
-
     var item = drag.item;
-    var isFree = drag.free;
 
-    if (isFree) {
-      // Cleanup but keep position
-      item.style.pointerEvents = '';
-      item.style.zIndex = '';
-      item.style.willChange = '';
-      item.style.width = '';
-      item.style.height = '';
-      item.style.margin = '';
+    if (drag.free) {
+      clearFreeStyles(item);
       item.classList.remove('dragging');
       document.body.classList.remove('dragengine-active');
-
-      // Save if requested
       savePosition(item);
 
-      document.body.dispatchEvent(new CustomEvent('dragengine:end', {
+      item.dispatchEvent(new CustomEvent('dragengine:end', {
         bubbles: true,
         detail: {
           item: item,
           from: { area: null, index: -1 },
           to: { area: null, index: -1 },
-          changed: true,
-        },
+          changed: true
+        }
       }));
 
       drag = null;
       return;
     }
 
-    // Normal mode
     var placeholder = drag.placeholder;
     var originArea = drag.originArea;
     var originIndex = drag.originIndex;
@@ -540,9 +546,7 @@
     finalArea.insertBefore(item, placeholder);
     placeholder.remove();
 
-    ['position', 'left', 'top', 'width', 'height', 'margin', 'zIndex', 'pointerEvents', 'willChange'].forEach(function (p) {
-      item.style[p] = '';
-    });
+    clearInlineStyles(item);
     item.classList.remove('dragging');
     document.body.classList.remove('dragengine-active');
 
@@ -553,10 +557,21 @@
       item: item,
       from: { area: originArea, index: originIndex },
       to: { area: finalArea, index: finalIndex },
-      changed: changed,
+      changed: changed
     };
-    finalArea.dispatchEvent(new CustomEvent('dragengine:end', { bubbles: true, detail: detail }));
-    if (changed) finalArea.dispatchEvent(new CustomEvent('dragengine:sort', { bubbles: true, detail: detail }));
+
+    finalArea.dispatchEvent(new CustomEvent('dragengine:end', {
+      bubbles: true,
+      detail: detail
+    }));
+
+    if (changed) {
+      finalArea.dispatchEvent(new CustomEvent('dragengine:sort', {
+        bubbles: true,
+        detail: detail
+      }));
+      sendHtmxUpdate(detail);
+    }
 
     drag = null;
   }
@@ -568,16 +583,14 @@
     var item = drag.item;
 
     if (drag.free) {
-      var parent = drag.freeOriginParent;
-      var next = drag.freeOriginNextSibling;
+      var parent = drag._dragfreeOriginParent;
+      var next = drag._dragfreeOriginNextSibling;
       if (next && next.parentNode === parent) {
         parent.insertBefore(item, next);
-      } else {
+      } else if (parent) {
         parent.appendChild(item);
       }
-      ['position', 'left', 'top', 'width', 'height', 'margin', 'zIndex', 'pointerEvents', 'willChange'].forEach(function (p) {
-        item.style[p] = '';
-      });
+      clearInlineStyles(item);
       item.classList.remove('dragging');
       document.body.classList.remove('dragengine-active');
       drag = null;
@@ -587,118 +600,125 @@
 
     drag.originArea.insertBefore(drag.item, drag.placeholder);
     drag.placeholder.remove();
-    ['position', 'left', 'top', 'width', 'height', 'margin', 'zIndex', 'pointerEvents', 'willChange'].forEach(function (p) {
-      drag.item.style[p] = '';
-    });
+    clearInlineStyles(drag.item);
     drag.item.classList.remove('dragging');
     document.body.classList.remove('dragengine-active');
     drag = null;
     pending = null;
   }
 
-  // ---------------------------------------------------------------
-  // Reset logic (double‑click to reset)
-  // ---------------------------------------------------------------
+
+  function sendHtmxUpdate(detail) {
+    if (typeof global.htmx === 'undefined') return;
+
+    var targetArea = detail.to.area;
+    if (!targetArea) return;
+
+    var method = null;
+    var endpoint = null;
+
+    if (targetArea.hasAttribute('hx-patch')) {
+      method = 'PATCH';
+      endpoint = targetArea.getAttribute('hx-patch');
+    } else if (targetArea.hasAttribute('hx-post')) {
+      method = 'POST';
+      endpoint = targetArea.getAttribute('hx-post');
+    } else if (targetArea.hasAttribute('hx-put')) {
+      method = 'PUT';
+      endpoint = targetArea.getAttribute('hx-put');
+    } else if (targetArea.hasAttribute('hx-delete')) {
+      method = 'DELETE';
+      endpoint = targetArea.getAttribute('hx-delete');
+    }
+
+    if (!method || !endpoint) return;
+
+    var item = detail.item;
+    var fromArea = detail.from.area;
+
+    var field = targetArea.getAttribute('field') ||
+                targetArea.getAttribute('data-field') ||
+                targetArea.getAttribute('drag-field') ||
+                'field';
+
+    var value = targetArea.getAttribute('value') ||
+                targetArea.getAttribute('data-value') ||
+                targetArea.getAttribute('drag-value') ||
+                '';
+
+    var fromField = fromArea
+      ? (fromArea.getAttribute('field') ||
+         fromArea.getAttribute('data-field') ||
+         fromArea.getAttribute('drag-field') ||
+         'field')
+      : field;
+
+    var fromValue = fromArea
+      ? (fromArea.getAttribute('value') ||
+         fromArea.getAttribute('data-value') ||
+         fromArea.getAttribute('drag-value') ||
+         '')
+      : '';
+
+    var payload = {};
+
+    if (item.dataset.id) payload.id = item.dataset.id;
+    else if (item.id) payload.id = item.id;
+
+    payload[field] = value;
+    payload.from_index = detail.from.index;
+    payload.to_index = detail.to.index;
+
+    if (fromArea) {
+      payload.from_field = fromField;
+      payload.from_value = fromValue;
+    }
+
+    var swap = targetArea.getAttribute('hx-swap') || 'none';
+
+    global.htmx.ajax(method, endpoint, {
+      target: targetArea,
+      swap: swap,
+      values: payload
+    });
+  }
+
+
   function onDblClick(e) {
-    var item = e.target.closest('.dragable.dragfree-save');
+    var item = e.target.closest
+      ? e.target.closest('dragfree, .dragfree, .dragfree-save, .dragable.dragfree, .draggable.dragfree, .dragable.dragfree-save, .draggable.dragfree-save')
+      : null;
     if (!item) return;
     e.preventDefault();
     resetFree(item);
   }
 
-  // Override the previous resetFree to use stored origin info
-  function resetFree(elOrId) {
-    var el;
-    if (typeof elOrId === 'string') {
-      el = document.querySelector('.dragfree-save[data-dragfree-id="' + elOrId + '"]');
-    } else {
-      el = elOrId;
-    }
-    if (!el || !el.classList.contains('dragfree-save')) return;
-
-    // Clear saved position
-    clearSavedPosition(el);
-
-    // If the element is currently in <body> (as it would be after a drag), move it back
-    if (el.parentNode === document.body && el._dragfreeOrigParent) {
-      var origParent = el._dragfreeOrigParent;
-      var origNext = el._dragfreeOrigNext;
-      if (origNext && origNext.parentNode === origParent) {
-        origParent.insertBefore(el, origNext);
-      } else if (origParent) {
-        origParent.appendChild(el);
-      }
-      // Clear stored origin
-      delete el._dragfreeOrigParent;
-      delete el._dragfreeOrigNext;
-    }
-
-    // Remove all inline styles added by dragging
-    ['position', 'left', 'top', 'width', 'height', 'margin', 'zIndex', 'pointerEvents', 'willChange'].forEach(function (p) {
-      el.style[p] = '';
-    });
-    el.classList.remove('dragging');
-  }
-
-  // ---------------------------------------------------------------
-  // public api
-  // ---------------------------------------------------------------
-
+  // public API
   function init(root) {
     root = root || document;
     if (initializedRoots.has(root)) return;
     initializedRoots.add(root);
+
     root.addEventListener('pointerdown', onPointerDown);
     root.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') cancel();
     });
-    root.addEventListener('dblclick', onDblClick); // double‑click to reset free elements
+    root.addEventListener('dblclick', onDblClick);
+
     restoreDragFreePositions();
   }
 
   global.DragEngine = {
     init: init,
     cancel: cancel,
-    resetFree: resetFree,
+    resetFree: resetFree
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { init(document); });
+    document.addEventListener('DOMContentLoaded', function () {
+      init(document);
+    });
   } else {
     init(document);
   }
 })(window);
-
-// ---------------------------------------------------------------
-// HTMX bridge (unchanged)
-// ---------------------------------------------------------------
-document.body.addEventListener('dragengine:sort', function (evt) {
-  const { item, to, changed } = evt.detail;
-  if (!changed) return;
-
-  const targetArea = to.area;
-  const id = item.dataset.id;
-  const field = targetArea.dataset.field;
-  const value = targetArea.dataset.value;
-
-  if (!id || !field || !value) return;
-
-  const endpoint = targetArea.dataset.endpoint || '/drag-update';
-  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-  const csrfToken = csrfMeta ? csrfMeta.content : '';
-
-  const payload = {
-    id: id,
-    field: field,
-    value: value,
-    from_index: evt.detail.from.index,
-    to_index: to.index,
-    csrf_token: csrfToken,
-  };
-
-  htmx.ajax('POST', endpoint, {
-    target: targetArea,
-    swap: 'none',
-    values: payload,
-  });
-});

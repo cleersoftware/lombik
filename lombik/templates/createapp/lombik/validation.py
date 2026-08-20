@@ -1,15 +1,8 @@
-from datetime import datetime, timezone
 from lombik.responses import Result
 from lombik.constants import USER_ROLES
 from models import User
 import re
 
-
-def utc_now():
-    return datetime.now(timezone.utc)
-
-
-import re
 
 def valid_email_pattern(email: str) -> bool:
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"

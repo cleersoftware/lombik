@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
+from lombik.utils import utc_now
 from db import db
 import uuid
 
-def utc_now():
-    return datetime.now(timezone.utc)
 
 class User(db.Model):
     __tablename__ = "users"
@@ -43,7 +42,7 @@ class User(db.Model):
     timezone = db.Column(
         db.String(100),
         nullable=False,
-        default="utc"
+        default="UTC"
     )
 
     status = db.Column(

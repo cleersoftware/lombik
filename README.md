@@ -1,20 +1,21 @@
-<header>
-  <div style="width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-    <img src="lombik/templates/createapp/static/icons/icon_512x512.png" alt="Lombik icon" width="128" height="128">
-  </div>
-</header>
+# Lombik
+
+<div align="center">
+  <img src="lombik/templates/createapp/static/icons/icon_512x512.png" alt="Lombik icon" width="128" height="128">
+</div>
 
 
-## Lombik
+## A practical Flask scaffold engine
 
-Lombik is a practical scaffold engine for Flask that saves you from hours on hours of configurations, integrations and a messy project structure. 
+Lombik is a practical scaffold engine for Flask that saves you from hours of configuration, integrations, boilerplate, and project-structure decisions.
 
-It leans heavily into a **hypermedia-first approach**, using Jinja2, template filters, HTMX, and Tailwind to keep logic close to the UI and reduce frontend complexity.
+It follows a **hypermedia-first approach**, leaning heavily on Flask, Jinja2, HTMX, Tailwind CSS, and server-rendered HTML. The idea is simple: keep as much application logic as possible close to the UI, without introducing a heavy frontend framework unless you actually need one.
 
-As an example, our commercial product called **proov** - *a digital delivery note/ proof of delivery platform for logistics* has 50% of its code being html.
-The entire application is just about 20K lines. 
+As a real-world example, our commercial product **proov** — a digital delivery note / proof-of-delivery platform for logistics — is built with Lombik.
 
+The application is roughly 20K lines of code, with HTML making up more than half of it:
 
+```text
 Language                     Files  Lines      Extension
 --------------------------------------------------------
 HTML                              58      11622   .html
@@ -30,15 +31,25 @@ TOML                               1          2   .toml
 --------------------------------------------------------
 TOTAL:                        165      21452
 ========================================================
+```
 
+The goal of Lombik is not to be the biggest Flask framework ever created.
 
-**Here is how to build with lombik:**
+It's to remove repetitive work and give you a clean starting point for building real applications.
 
-1. First off, install it.
+---
 
-`pip install lombik`
+## Getting started
 
-I try to keep dependencies as low as possible. Currently it will downlaod these packages on install:
+### 1. Install Lombik
+
+```bash
+pip install lombik
+```
+
+I try to keep dependencies to a minimum.
+
+Currently Lombik installs:
 
 - Flask>=3.0
 - Flask-SQLAlchemy>=3.1
@@ -55,132 +66,187 @@ I try to keep dependencies as low as possible. Currently it will downlaod these 
 - resend
 - python-dateutil>=2.9.0
 
-2. Navigate to your desired folder
+### 2. Create your application
 
-`lombik createapp myapp`
+Navigate to the folder where you want your application and run:
 
-This will generate the entier project structure for you. 
-The app can now be ran:
+```bash
+lombik createapp myapp
+```
 
-`lombik run`
+This generates the complete project structure for you.
 
-However, before doing so, it's best to create your superuser account.
+Once created, you can run the application with:
 
-If your app is running, quit it `ctrl + c`
+```bash
+lombik run
+```
 
-3. Initialize the database
+Before doing that, however, you'll probably want to initialize the database and create your first superuser.
 
-`lombik initdb`
+### 3. Initialize the database
 
-By default, the environment is set to test/default for which sqlite3 is used. 
-Production db by default is MySQL, but you can change this in `lombik/configuration.py`
-Don't forget to update your credentials in your environment variables.
+```bash
+lombik initdb
+```
 
-4. Create a superuser account
+By default, the development/test environment uses SQLite.
 
-`lombik superuser`
+Production is configured to use MySQL by default, but you can change this in:
 
-Now it's time to run the app.
+```text
+lombik/configuration.py
+```
 
-`lombik run`
+Make sure your database credentials are configured in your environment variables.
+
+### 4. Create a superuser
+
+```bash
+lombik superuser
+```
+
+Now run the application:
+
+```bash
+lombik run
+```
+
+And you're ready to go.
 
 ---
 
-### Routes
+# Routes
 
-The app is running, and you can log in.
-Let's add one where only registered / logged in users can access.
+Lombik keeps routing deliberately simple.
 
-Just add the following import on the top of your file
-`from lombik.wrappers import login_required`
+Let's say we want a page that only authenticated users can access.
 
-Create a new route
+At the top of your module:
+
+```python
+from lombik.wrappers import login_required
+```
+
+Then create the route:
 
 ```python
 @core_bp.route("/members")
 @login_required
 def members():
-  return render_template("...")
+    return render_template("...")
 ```
 
-**Simple isn't it?**
+Simple.
 
-Now let's add one only for admins and superusers.
-Back at the top of the file
+Now let's make another route that only administrators and superusers can access.
 
-`from lombik.wrappers import login_required, roles_required`
-
-Then create another route for admins
+```python
+from lombik.wrappers import login_required, roles_required
+```
 
 ```python
 @core_bp.route("/admin")
 @login_required
 @roles_required("admin", "superuser")
 def admin():
-  return render_template("...")
+    return render_template("...")
 ```
 
-**However**, I do not recommend mixing admin pages with the core application so this flows well into the next step.
-Create a separate module for admin related activities.
+### Keep admin functionality separate
 
-`lombik module admin`
+I don't recommend mixing admin functionality into your core application.
 
-This will generate an admin folder in your blueprints with the default structure. Keeps things organized.
-Blueprints are automatically registered so no further action is needed.
+Create a dedicated module instead:
 
-You can protect your routes with an in memory rate limiter (for proudction you may want to use redis or alike)
+```bash
+lombik module admin
+```
 
-`from lombik.extensions import limiter`
+This generates an `admin` blueprint with the default structure and automatically registers it for you.
+
+Keeps things tidy, which future-you will appreciate.
+
+### Rate limiting
+
+Lombik also includes an in-memory rate limiter.
+
+For production, you may want to configure a shared backend such as Redis depending on your deployment setup.
 
 ```python
+from lombik.extensions import limiter
+
 @core_bp.route("/admin")
 @limiter.limit("60 per minute")
 @login_required
 @roles_required("admin", "superuser")
 def admin():
-  return render_template("...")
+    return render_template("...")
 ```
-
 
 ---
 
-### Actions
+# Actions
 
-By default, lombik suggests to keep routes, actions and queries separately. 
-An action is for example changing a users timezone. When signing up, the standard timezone for users is UTC.
-Let's create a way to change it end-to-end, in the lombik/hypermedia first approach.
+Lombik encourages keeping **routes, actions, and queries separate**.
 
-1. We start where the user starts, back at `/members`
+An action is something that changes application state.
 
-We should pass all timezones to the template so the user can select from an existing list.
-We use the page context for this. Timezones are available in `lombik/constants.py`. 
-Since timezone don't really change, we can just save them on startup into a list without the need to re-fetch them every time.
+For example, let's allow users to change their timezone.
 
-`from lombik.constants import TIMEZONES`
+When a user signs up, Lombik defaults their timezone to UTC.
 
-then in context
+## 1. Pass the available timezones to the template
+
+Lombik includes a list of timezones in:
+
+```text
+lombik/constants.py
+```
+
+Import it:
+
+```python
+from lombik.constants import TIMEZONES
+```
+
+Then pass it into your page context:
 
 ```python
 @core_bp.route("/members")
 def members():
     context = {
         "selected": "members",
-        "timezones: TIMEZONES
+        "timezones": TIMEZONES,
     }
-    return render_template("/core/members.html", **context)
+
+    return render_template(
+        "core/members.html",
+        **context
+    )
 ```
 
-Python automatically unpacks the context so we can reference it in the template as `{{ timezones }}`
+Python unpacks the dictionary, so the template can access it as:
 
-2. Now let's create `core/members.html`
+```jinja2
+{{ timezones }}
+```
 
-Use Jinja to extend the base template and a selectbox with timezones listed
+## 2. Create the UI
+
+Create:
+
+```text
+core/members.html
+```
+
+Then use Jinja and HTMX to create the timezone selector:
 
 ```html
 {% extends "base/base.html" %}
 
 {% block title %}
-  Members
+    Members
 {% endblock %}
 
 {% block content %}
@@ -188,7 +254,7 @@ Use Jinja to extend the base template and a selectbox with timezones listed
 <div class="space-y-6">
 
     <h1>Hello {{ g.user.username }}</h1>
-    
+
     <select
         hx-patch="{{ url_for('core_bp.update_timezone') }}"
         hx-vals='{
@@ -196,106 +262,195 @@ Use Jinja to extend the base template and a selectbox with timezones listed
         }'
         hx-trigger="change"
         hx-target="#timezoneUpdateError"
-        hx-swap="#innerHTML"
+        hx-swap="innerHTML"
         name="tz">
+
         {% for tz in timezones %}
-        <option value="{{ tz }}" 
-            {% if g.user.timezone == tz %}
-                selected
-            {% endif %}
+            <option
+                value="{{ tz }}"
+                {% if g.user.timezone == tz %}
+                    selected
+                {% endif %}
             >
-            {{ tz }}
-        </option>
-    {% endfor %}
-</select>
-<div id="timezoneUpdateError"></div>
+                {{ tz }}
+            </option>
+        {% endfor %}
+
+    </select>
+
+    <div id="timezoneUpdateError"></div>
 
 </div>
 
 {% endblock %}
 ```
 
-*ps.: We could use forms.py within the module but personally for such small action I like to keep it simple.*
+You could use `forms.py` for this, but for a small action like this I personally prefer keeping it lightweight.
 
-Alright, now we need to create this action in `blueprints/core/actions.py`
+## 3. Create the action
+
+Create the action in:
+
+```text
+blueprints/core/actions.py
+```
 
 ```python
-from . import core_bp
 from flask import g, request
+
+from db import db
 from lombik.responses import Result, htmx_response
 from lombik.users import change_user_timezone
-from db import db
+
+from . import core_bp
+
 
 @core_bp.patch("/users/me/timezone")
 def update_timezone():
+
     def _timezone_message(message, color):
-        return htmx_response(html=f"""
-            <button
-                onclick="this.classList.add('hidden');"
-                class="text-xs -mt-2 flex items-center gap-1 {color}">
-                {message}
-                <ion-icon name="close-circle-outline"></ion-icon>
-            </button>
-        """)
+        return htmx_response(
+            html=f"""
+                <button
+                    onclick="this.classList.add('hidden');"
+                    class="text-xs -mt-2 flex items-center gap-1 {color}">
+                    {message}
+                    <ion-icon name="close-circle-outline"></ion-icon>
+                </button>
+            """
+        )
 
     new_timezone = request.values.get("tz", "")
 
-    res = change_user_timezone(user_id=g.user.id, new_timezone=new_timezone)
+    result = change_user_timezone(
+        user_id=g.user.id,
+        new_timezone=new_timezone,
+    )
 
-    return htmx_response(
-        html=_timezone_message(
-            message=res.message,
-            color="green" if res.success == True else "red"
-        )
+    return _timezone_message(
+        message=result.message,
+        color="green" if result.success else "red",
     )
 ```
-**Done**
 
-We used the built in function to change the user's timezone. It does all the validation and returns the `Result` object.
-In lombik, we use the Result object when performing actions.
-The structrue is very simple:
+That's it.
+
+The built-in `change_user_timezone()` function handles validation and returns a `Result` object.
+
+Lombik uses `Result` objects as the standard way to represent action outcomes.
+
+The structure is intentionally simple:
 
 ```python
 Result(
-    success=True, # bool
-    data={"new_timezone": new_timezone}, # dict or None on success=False
-    message="Timezone changed successfully." #str
+    success=True,
+    data={"new_timezone": new_timezone},
+    message="Timezone changed successfully.",
 )
-```  
-
-Before we move on, let's look at some of the filters that lombik comes with. 
-Let's say we wanted to have a dynamic title showing something like **John's dashboard**:
-
-We can use a filter called **proper** which capitalizes each word and replaces underscores with spaces.
-With proper, `{{ john_doe | proper }}` becomes: **John Doe**
-
-Next up we can add the **possessive** filter.
-This will turn `{{ john_doe | proper | possessive }}` into John Doe's appropriately.
-
-To create it, simply add this into your title block 
-
-```html
-{% block title %}
-  {{ g.user.full_name | proper | possessive }} dashboard
-{% endblock %}
 ```
-Now we should create a card showing the user how long they've been members for, something like **You became a member 3 months ago**
 
-We can use the `{{ g.user.created_at }}` timestmap in combination with a filter called timesince, so isntead of showing *2026-08-19 13:33:44.763467* it will show *5 hours ago*. 
-
-It has a nice progression from: *just now* -> *few minutes ago* -> *N minutes ago* -> *N hours ago* etc.
-
-`<p>You became a member {{ g.user.created_at | timesince }}</p>`
-
-To get the same effect but for the future, use **timeuntil**.
-
-There are more filters that make frontend work easier, you'll find them all in `lombik/filters.py`.
+`data` can also be `None` when the action fails.
 
 ---
 
-### Queries
+# Template filters
 
-Queries are quite straightforward, all resources shall be queried through these endpoints unless it's highly inconvinient.
+Lombik includes several filters designed to make server-rendered UI easier to work with.
+
+You'll find them in:
+
+```text
+lombik/filters.py
+```
+
+### `proper`
+
+Capitalizes words and replaces underscores with spaces.
+
+```jinja2
+{{ john_doe | proper }}
+```
+
+Becomes:
+
+```text
+John Doe
+```
+
+### `possessive`
+
+Turns a name into a possessive form:
+
+```jinja2
+{{ john_doe | proper | possessive }}
+```
+
+Becomes:
+
+```text
+John Doe's
+```
+
+So you can write:
+
+```html
+{% block title %}
+    {{ g.user.full_name | proper | possessive }} dashboard
+{% endblock %}
+```
+
+### `timesince`
+
+Lombik also includes human-readable time filters.
+
+Instead of displaying:
+
+```text
+2026-08-19 13:33:44.763467
+```
+
+You can display:
+
+```jinja2
+<p>
+    You became a member {{ g.user.created_at | timesince }}
+</p>
+```
+
+Which could result in:
+
+```text
+You became a member 5 hours ago
+```
+
+The filter progresses naturally:
+
+```text
+just now
+→ few minutes ago
+→ N minutes ago
+→ N hours ago
+→ N days ago
+→ ...
+```
+
+For future dates, use:
+
+```jinja2
+{{ some_date | timeuntil }}
+```
+
+There are several other useful filters included with Lombik. Check `lombik/filters.py` for the complete list.
+
+---
+
+# Queries
+
+Queries are deliberately separated from routes and actions.
+
+As a general rule, resources should be queried through dedicated query functions unless doing so would make the code unnecessarily complicated.
+
+For example:
 
 ```python
 @core_bp.get("/users")
@@ -304,54 +459,84 @@ def get_users():
     return get_users_by_status(status=status)
 ```
 
+You can combine this with Lombik's built-in cache:
 
 ```python
 from lombik.extensions import cache
+
 
 @core_bp.get("/users")
 @cache.memoize(timeout=30)
 def get_users():
     status = request.args.get("status")
     users = get_users_by_status(status=status)
-    return render_template("core/partials/users.html", users=users)
+
+    return render_template(
+        "core/partials/users.html",
+        users=users,
+    )
 ```
-Then you'd create this partials in `core/partials/users.html`
+
+Create the partial:
+
+```text
+core/partials/users.html
+```
+
 ```html
 {% for user in users %}
     <li>{{ user.username | proper }}</li>
 {% endfor %}
 ```
 
-And ready to be used in `members.html`
+And load it dynamically with HTMX:
 
 ```html
 <div>
     <p>Active members</p>
-    <ul 
+
+    <ul
         hx-get="{{ url_for('core_bp.get_users', status='active') }}"
         hx-trigger="load, every 30s">
-        <!-- htmx populates-->
+        <!-- HTMX populates this -->
     </ul>
 </div>
 ```
 
+No frontend framework required.
+
 ---
 
-### Models
+# Models
 
-Next up, let's turn lombik into a multi tenant platform. In order to do that, we'll need a new table called tenants. 
-Instead of manually creating one, use the built in model generator and add the name of you model. Use singular names. Lombik automatically generates the plurar version of it for the actual SQL architecture, but will use the singular for the class.
+Let's say we want to turn our application into a multi-tenant platform.
 
-`lombik model tenant`
+We'll need a `tenants` table.
 
-This creates a default model structure and registeres it automatically in the `models/__init__.py`
+Instead of creating the model manually, use Lombik's model generator:
 
-Add your columns and do not delete the relationship marker from the bottom.
+```bash
+lombik model tenant
+```
+
+Use singular names when generating models.
+
+Lombik will use the singular name for the Python class and generate the plural table name automatically.
+
+The command creates the model and registers it in:
+
+```text
+models/__init__.py
+```
+
+A generated model looks roughly like this:
 
 ```python
 from db import db
 import uuid
-from lombik.utils import utc_now        
+
+from lombik.utils import utc_now
+
 
 class Tenant(db.Model):
     __tablename__ = "tenants"
@@ -379,175 +564,396 @@ class Tenant(db.Model):
 
     # <LOMBIK:RELATIONSHIPS>
 ```
-Don't forget to update the users class to add tenant_id:
+
+Add your own columns, but don't remove the relationship marker.
+
+For example, update your `User` model with:
+
 ```python
 tenant_id = db.Column(
     db.String(36)
 )
-
-# In production you'd make this nullable=False and re-create the superuser.
-
 ```
 
-When done, run:
+In production, you'd probably make this `nullable=False` and recreate your superuser.
 
-`lombik db -m"added tenants"`
+### Migrations
 
-This command will run migration and upgrade at once.
-To create relationship fast, you can use lombik's relationship generator which looks like this.
+When you're done:
 
-`lombik relate parent.field to child.field [one-to-many|many-to-one|one-to-one|many-to-many] [--lazy LAZY]`
+```bash
+lombik db -m "added tenants"
+```
 
-Here are a few examples:
+This creates the migration and upgrades the database in one command.
 
-```python
+### Relationships
+
+Lombik also includes a relationship generator:
+
+```bash
+lombik relate parent.field to child.field [one-to-many|many-to-one|one-to-one|many-to-many] [--lazy LAZY]
+```
+
+For example:
+
+```bash
 lombik relate tenant.id to user.tenant_id one-to-many
 lombik relate user.tenant_id to tenant.id many-to-one
 lombik relate tenant.id to setting.tenant_id one-to-one
 lombik relate user.id to role.user_id many-to-many
 ```
-If you run this, you'll notice that it added relationships below the marker in both models.
 
-`lombik relate tenant.id to user.tenant_id one-to-many`
+The relationships are inserted into both models below the Lombik relationship marker.
 
+For example:
+
+```bash
+lombik relate tenant.id to user.tenant_id one-to-many
+```
 
 ---
 
-### UI
+# UI
 
-Lombik comes with a built in light & dark theme handler in `static/js/theme.js`
-You can easily use tailwinds default `dark:...`
+Lombik comes with a lightweight theme handler in:
 
-To haev a toggle button for the user you can use this snippet
+```text
+static/js/theme.js
+```
+
+It supports light and dark mode and works nicely with Tailwind's built-in `dark:` utilities.
+
+### Theme toggle
 
 ```html
-<button onclick="toggleDarkMode()" id="changeThemeBtn">
-  <ion-icon id="themeIcon" name="moon-outline"></ion-icon>
-  <span id="themeText">Dark mode</span>
+<button
+    onclick="toggleDarkMode()"
+    id="changeThemeBtn">
+
+    <ion-icon
+        id="themeIcon"
+        name="moon-outline">
+    </ion-icon>
+
+    <span id="themeText">
+        Dark mode
+    </span>
 </button>
 ```
 
-#### Dropdown
+---
 
-I tried making dropdown in a way I always thought HTML should have it. 
-You can use a custom tag `<dropdown></dropdown>` and populate it with links or buttons. 
+## Dropdowns
 
-When using it with a button, it is important to set the button type to be 'button', otherwise in interferes. Parent shall also be relative.
+I always thought HTML should have a simpler way of doing dropdowns.
 
-Here is an example how I use it in my production application (without styling, you can style them as you wish):
+So Lombik has one.
+
+Use:
+
+```html
+<dropdown></dropdown>
+```
+
+and put links or buttons inside it.
+
+When using a button to open a dropdown, set:
+
+```html
+type="button"
+```
+
+Otherwise, it can interfere with form submission.
+
+The parent element should also be positioned relatively.
+
+Example:
 
 ```html
 <div class="relative">
-  <button type="button">
-    <ion-icon
-      name="settings-outline"
-    ></ion-icon>
-  </button>
 
-  <dropdown class="absolute right-0 w-40">
-    <a href="/">Home</a>
-    <a href="/apis">API</a>
-    <a href="/settings">Settings</a>
-
-    <hr class="my-1 dark:border-darkaccent" />
-
-    <button
-        onclick="toggleDarkMode()"
-        id="changeThemeBtn">
-        <ion-icon id="themeIcon" name="moon-outline"></ion-icon>
-        <span id="themeText">Dark mode</span>
+    <button type="button">
+        <ion-icon name="settings-outline"></ion-icon>
     </button>
 
-    <hr class="my-1"/>
+    <dropdown class="absolute right-0 w-40">
 
-    <button type="button"
-      hx-post="{{ url_for('auth_bp.logout') }}"
-      hx-vals='{
-          "csrf_token": "{{ csrf_token() }}"
-      }'>
-      Log out
-    </button>
+        <a href="/">Home</a>
+        <a href="/apis">API</a>
+        <a href="/settings">Settings</a>
 
-  </dropdown>
+        <hr class="my-1 dark:border-darkaccent" />
+
+        <button
+            type="button"
+            onclick="toggleDarkMode()"
+            id="changeThemeBtn">
+
+            <ion-icon
+                id="themeIcon"
+                name="moon-outline">
+            </ion-icon>
+
+            <span id="themeText">
+                Dark mode
+            </span>
+        </button>
+
+        <hr class="my-1" />
+
+        <button
+            type="button"
+            hx-post="{{ url_for('auth_bp.logout') }}"
+            hx-vals='{
+                "csrf_token": "{{ csrf_token() }}"
+            }'>
+            Log out
+        </button>
+
+    </dropdown>
+
 </div>
-
 ```
 
-#### Draggin & Dropping
-
-Similar to the dropdown, I also thought html should have a standard for this. I recommend you to read the how to use section in `static/js/drag.js` 
-
-The core idea is that you can use a custom html tag `<dragarea>..</dragarea>`. Within it, you can drag anything that has a class `.dragable` or `.draggable`.
-
-If you wanted to have dragable cards interact with other boards, eg.: you have a **dragarea** for open tasks, one for in progress etc. 
-You can assign a family to it like this: `<dragarea family="tasks">` Now every dragarea of the same family can interact with each other.
-
-To store the state, you need two things.
-First you need to haev each card a unique id, something like this:
-
-`<div class="dragable .." data-id="{{ task.id }}"`  
-
-Then you can use htmx on the **dragarea** element like this:
-
-```html
-<dragarea 
-  family="tasks"
-  hx-patch="/update-task-status"
-  hx-vals='{"csrf_token": "{{ csrf_token }}"}'
-  field="status"
-  value="open">
-
-```
-It will automatically inject the ID of the dropped element into an ajax request with values:
-
-```json
-{
-  id: item.dataset.id,
-  status: open, (it took the status from field and assign the value open to it)
-  from_index: 0,
-  to_index: 1,
-  from_field: "status",
-  from_value: "new"
-}
-```
-Another custom tag is `<dragfree>..</dragfree>`
-This allows anything inside to be dragged around freely without snapping to anything. You can also store its location by giving it an id.
-
-`<dragfree id="note-{{ note.id }}">...</dragfree>`
-
-Now wherever you move it to, it will save it localstorage. Double click it to reset it's location.
+Style it however you like.
 
 ---
 
-### Other
+## Drag & drop
 
-Just a few tips:
+Lombik also includes a lightweight drag-and-drop implementation in:
 
-- Disable/comment out the exception error handler in `lombik/errors.py` to see the debug screen during development. (or add {e} inot the 500.html file)
+```text
+static/js/drag.js
+```
 
-- Flash messages have their own class and can easily be used across routes. Just import it form `lombik.flash import Flash` and on re-directs yo ucan use `Flash.ok("..message here..")` or `Flash.error("..")` etc. Explore the class to see all. It comes with a predesigned look, icon, animation etc. and injected into the base template.
+For the full API and examples, see the documentation inside that file.
 
-- Modals are also simple, you just use `<button onclick="openModal('id_of_your_modal');"`. It will open, listen to close and for clicks outside of the modal area. There is a default modal template in `base/partials/modal.html`
+The main idea is simple:
 
-- Tests. Lombik uses standard flask tests we jsut have soem custom commands for it: 
-> `lombik test` Runs the tests
-> `lombik test_report` Runs the tests and generates report
-> `lombik test_report_html` Runs the tests and generates html report
+```html
+<dragarea>
+    ...
+</dragarea>
+```
 
-- Session expiry. When CSRF tokens expire (set it in configurations) user will be shown a page to refresh their session.
+Anything with the class:
 
-- Resend is configured as a default email engine. You can jsut update your API key and use `from lombik.mail import send_email`
+```text
+.dragable
+```
 
-- Forms. Lombik has a ligth version of form validation, review the default login / register pages to learn more about it. It's failty simple and keeps things organized
+or:
 
-- Image saving and compression functions are in `lombik/images`
+```text
+.draggable
+```
 
-- Validation functions are in `lombik.validation`. It has built in email pattern valdiator, role validator, password strength etc.
+can be dragged.
 
-There is more, I recommend you discover it as you go, it's a small engine but I liek to think it's powerful. At least for my own use cases.
+### Connecting multiple drag areas
 
-I hope you find it useful too. It's MIT licensed so contributions, fixes, forks are more than welcome.
+For things such as task boards:
 
+```html
+<dragarea family="tasks">
+```
 
+Every `<dragarea>` using the same family can interact with each other.
 
+### Saving state
 
+Each draggable item needs a unique ID:
+
+```html
+<div
+    class="draggable"
+    data-id="{{ task.id }}">
+```
+
+Then attach HTMX to the drag area:
+
+```html
+<dragarea
+    family="tasks"
+    hx-patch="/update-task-status"
+    hx-vals='{
+        "csrf_token": "{{ csrf_token() }}"
+    }'
+    field="status"
+    value="open">
+```
+
+Lombik will automatically send information about the dragged item, including:
+
+```json
+{
+    "id": item.dataset.id,
+    "status": "open",
+    "from_index": 0,
+    "to_index": 1,
+    "from_field": "status",
+    "from_value": "new"
+}
+```
+
+### Free dragging
+
+Another custom element is:
+
+```html
+<dragfree></dragfree>
+```
+
+This allows elements to be moved freely without snapping into a board.
+
+You can persist the location by giving the element an ID:
+
+```html
+<dragfree id="note-{{ note.id }}">
+    ...
+</dragfree>
+```
+
+The position is stored in `localStorage`.
+
+Double-click the element to reset its position.
+
+---
+
+# Other useful features
+
+Lombik contains a bunch of smaller utilities that are easy to overlook.
+
+### Error handling
+
+During development, you may want to disable or comment out the custom exception handler in:
+
+```text
+lombik/errors.py
+```
+
+This lets Flask's debug error screen show normally.
+
+Alternatively, you can expose the exception in your `500.html` template during development.
+
+### Flash messages
+
+Flash messages have their own class and can be used across routes.
+
+```python
+from lombik.flash import Flash
+```
+
+Then:
+
+```python
+Flash.ok("Profile updated successfully.")
+Flash.error("Something went wrong.")
+```
+
+There are several message types available. Check the `Flash` class for the full API.
+
+Messages are automatically injected into the base template and come with styling, icons, and animations.
+
+### Modals
+
+Opening a modal is deliberately simple:
+
+```html
+<button onclick="openModal('myModal')">
+    Open modal
+</button>
+```
+
+Lombik handles opening, closing, and clicking outside the modal.
+
+A default modal template is included at:
+
+```text
+base/partials/modal.html
+```
+
+### Testing
+
+Lombik uses standard Flask/Pytest testing with a few convenience commands:
+
+```bash
+lombik test
+```
+
+Run the test suite.
+
+```bash
+lombik test_report
+```
+
+Run tests and generate a report.
+
+```bash
+lombik test_report_html
+```
+
+Run tests and generate an HTML report.
+
+### Sessions
+
+When CSRF/session tokens expire, Lombik can show the user a dedicated page prompting them to refresh their session.
+
+The expiry time can be configured through the application configuration.
+
+### Email
+
+Resend is configured as the default email provider.
+
+Add your API key to your environment and send email with:
+
+```python
+from lombik.mail import send_email
+```
+
+### Forms
+
+Lombik includes a lightweight form-validation system.
+
+Have a look at the default login and registration pages to see how it works.
+
+The goal is intentionally not to build another giant form framework. Keep the validation close to the form and keep it readable.
+
+### Images
+
+Image saving and compression utilities are available in:
+
+```text
+lombik/images
+```
+
+### Validation
+
+Reusable validation helpers live in:
+
+```text
+lombik/validation
+```
+
+They include things such as:
+
+- email validation
+- role validation
+- password strength validation
+- and other common validators
+
+---
+
+# Final thoughts
+
+There is more to Lombik, but you'll probably discover most of it as you build.
+
+It's a small engine, but I like to think its useful.
+
+At least for the applications I build with it.
+
+The project is **MIT licensed**, so contributions, fixes, ideas, and forks are more than welcome.
+
+Hopefully Lombik saves you a few hours of boilerplate and lets you get to the interesting part of building your application a little faster.

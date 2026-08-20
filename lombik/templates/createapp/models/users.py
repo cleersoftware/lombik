@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from lombik.utils import utc_now
 from db import db
 import uuid
@@ -96,3 +95,5 @@ class User(db.Model):
     delete_at = db.Column(
         db.DateTime(timezone=True)
     )
+
+    # <LOMBIK:RELATIONSHIPS>

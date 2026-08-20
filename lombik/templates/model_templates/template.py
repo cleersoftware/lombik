@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from lombik.utils import utc_now
 from db import db
 import uuid

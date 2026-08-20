@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from lombik.utils import utc_now
 from db import db
 import uuid
@@ -24,4 +23,7 @@ class Error(db.Model):
 
     created_at = db.Column(db.DateTime(timezone=True), default=utc_now, index=True)
 
+    # <LOMBIK:RELATIONSHIPS>
+
     user = db.relationship("User")
+

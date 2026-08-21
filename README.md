@@ -820,6 +820,98 @@ The position is stored in `localStorage`.
 
 Double-click the element to reset its position.
 
+## Charts
+
+Lombik comes with a built in library that makes charts easy.
+
+It supports
+
+- bar charts
+- area charts
+- bubble charts
+- line charts
+- donut charts
+
+Creating one is simple:
+
+```html
+<bar-chart 
+    x="['HTML', 'JS', 'Python', 'CSS']"
+    y="[1000, 2000, 1500, 800]"
+    x-title="Language"
+    y-title="LOC"
+>
+</bar-chart>
+```
+
+What you can also do isntead of separate x-y values, is to pass a dictionary intt the data attribute like this:
+
+```html
+<bar-chart 
+    data='{
+            "HTML": 1000,
+            "JS": 2000,
+            "Python": 1500,
+            "CSS": 800
+        }'
+    x-title="Language"
+    y-title="LOC"
+>
+</bar-chart>
+```
+Area and line chart both work the same way.
+
+Donut chart:
+
+```html
+<donut-chart 
+    labels="['HTML', 'JS', 'Python', 'CSS']"
+    values="[1000, 2000, 1500, 800]"
+    legend="true"
+>
+</donut-chart>
+
+OR
+
+<donut-chart data='{
+    "HTML": 1000, 
+    "JS": 2000, 
+    "Python": 1500,
+    "CSS": 800
+}'></donut-chart>
+
+
+```
+Bubble chart:
+
+```html
+<bubble-chart
+    x='[1, 2, 3, 4, 5]'
+    y='[10, 15, 8, 20, 12]'
+    size='[40, 80, 30, 100, 60]'
+    labels='["A", "B", "C", "D", "E"]'
+    x_title="X Axis"
+    y_title="Y Axis"
+    theme="ocean"
+></bubble-chart>
+
+OR
+
+<bubble-chart
+    data='{"A": {"x": 1, "y": 10, "size": 40}, "B": {"x": 2, "y": 15, "size": 80}}'
+    x_title="X"
+    y_title="Y"
+></bubble-chart>
+
+```
+
+You might have noticed, bubble-chart had an attribute called `theme=""`
+
+You can use this to change any chart's theme colors. 
+They are stored in `static/js/chart.js`
+
+The current themes were all generated with AI, I encourage you to create your own themes matching you app.
+
 ---
 
 # Other useful features

@@ -7,7 +7,7 @@ from lombik.utils import utc_now
 def home():
     context = {
         "selected": "home",
-        "version": "3.2.0",
+        "version": "3.2.1",
         "current_ts": utc_now()
     }
     return render_template("/core/home.html", **context)

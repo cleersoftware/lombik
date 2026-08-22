@@ -87,3 +87,23 @@ dragfree,
 body.dragengine-active {
   cursor: grabbing;
 }
+
+.dragging {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3),
+            0 8px 10px -6px rgb(0 0 0 / 0.3);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.drag-placeholder {
+  border-radius:0.5rem;
+  border: 1px;
+  border-style: dashed;
+  border-color: #FF6B5A;
+  opacity: 70%;
+}

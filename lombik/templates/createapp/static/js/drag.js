@@ -115,7 +115,15 @@
   }
 
   function getMode(area) {
-    return (hasModifier(area, 'snap') || hasModifier(area, 'ordered')) ? 'swap' : 'insert';
+    if (
+      hasModifier(area, 'snap') ||
+      hasModifier(area, 'ordered') ||
+      getAxis(area) === 'grid'
+    ) {
+      return 'swap';
+    }
+
+    return 'insert';
   }
 
   function isAnimated(area) {
@@ -184,7 +192,9 @@
     var parentA = a.parentNode;
     var parentB = b.parentNode;
     if (!parentA || !parentB) return;
+
     var marker = document.createComment('');
+
     parentA.insertBefore(marker, a);
     parentB.insertBefore(a, b);
     parentA.insertBefore(b, marker);
@@ -388,15 +398,16 @@
       drag = {
         pointerId: p.pointerId,
         item: item,
-        placeholder: null,
-        originArea: null,
-        originIndex: -1,
+        placeholder: placeholder,
+        originArea: area,
+        originIndex: indexOf(placeholder, area),
         offsetX: p.offsetX,
         offsetY: p.offsetY,
         pointerX: e.clientX,
         pointerY: e.clientY,
         rafId: null,
-        free: true
+        free: false,
+        lastSwapTarget: null
       };
 
       suppressClick(item);
@@ -460,54 +471,99 @@
     var area = el.closest ? el.closest(AREA_SELECTOR) : null;
     if (!area || !isCompatible(area)) return;
 
-    var targetChild = el.closest ? el.closest(ITEM_SELECTOR + ', .drag-placeholder') : null;
+    var targetChild = el.closest
+      ? el.closest(ITEM_SELECTOR + ', .drag-placeholder')
+      : null;
+
     if (targetChild === drag.item) return;
 
+    /*
+    * Not currently over an item.
+    * This is important for allowing another swap after
+    * moving away from the previous target.
+    */
     if (!targetChild) {
+      drag.lastSwapTarget = null;
+
       if (area !== drag.placeholder.parentNode) {
         var animatedTarget = isAnimated(area);
         var animatedOrigin = isAnimated(drag.placeholder.parentNode);
-        var rectsTarget = animatedTarget ? captureRects(area) : null;
-        var rectsOrigin = animatedOrigin ? captureRects(drag.placeholder.parentNode) : null;
+
+        var rectsTarget = animatedTarget
+          ? captureRects(area)
+          : null;
+
+        var rectsOrigin = animatedOrigin
+          ? captureRects(drag.placeholder.parentNode)
+          : null;
+
         area.appendChild(drag.placeholder);
+
         playFlip(rectsTarget);
         playFlip(rectsOrigin);
       }
+
       return;
     }
 
-    if (targetChild === drag.placeholder) return;
+    if (targetChild === drag.placeholder) {
+      drag.lastSwapTarget = null;
+      return;
+    }
 
     var mode = getMode(area);
     var animated2 = isAnimated(area);
     var crossArea = drag.placeholder.parentNode !== area;
-    var rectsTarget = (animated2 || (crossArea && isAnimated(drag.placeholder.parentNode)))
-      ? captureRects(area)
-      : null;
-    var rectsOrigin = (crossArea && isAnimated(drag.placeholder.parentNode))
-      ? captureRects(drag.placeholder.parentNode)
-      : null;
 
+    var rectsTarget =
+      (animated2 || (crossArea && isAnimated(drag.placeholder.parentNode)))
+        ? captureRects(area)
+        : null;
+
+    var rectsOrigin =
+      (crossArea && isAnimated(drag.placeholder.parentNode))
+        ? captureRects(drag.placeholder.parentNode)
+        : null;
+
+    /*
+    * Only exchange the dragged item's placeholder
+    * with the item currently underneath the pointer.
+    *
+    * No other items are shifted.
+    */
     if (mode === 'swap') {
-      swapNodes(drag.placeholder, targetChild);
-    } else {
-      var axis = getAxis(area);
-      var r = targetChild.getBoundingClientRect();
-      var before;
-
-      if (axis === 'x') {
-        before = drag.pointerX < r.left + r.width / 2;
-      } else if (axis === 'grid') {
-        var cy = r.top + r.height / 2;
-        before = (Math.abs(drag.pointerY - cy) > r.height * 0.25)
-          ? (drag.pointerY < cy)
-          : (drag.pointerX < r.left + r.width / 2);
-      } else {
-        before = drag.pointerY < r.top + r.height / 2;
+      if (drag.lastSwapTarget !== targetChild) {
+        swapNodes(drag.placeholder, targetChild);
+        drag.lastSwapTarget = targetChild;
       }
 
-      if (before) area.insertBefore(drag.placeholder, targetChild);
-      else area.insertBefore(drag.placeholder, targetChild.nextSibling);
+      playFlip(rectsTarget);
+      playFlip(rectsOrigin);
+
+      return;
+    }
+
+    var axis = getAxis(area);
+    var r = targetChild.getBoundingClientRect();
+    var before;
+
+    if (axis === 'x') {
+      before = drag.pointerX < r.left + r.width / 2;
+    } else if (axis === 'grid') {
+      var cy = r.top + r.height / 2;
+
+      before =
+        (Math.abs(drag.pointerY - cy) > r.height * 0.25)
+          ? (drag.pointerY < cy)
+          : (drag.pointerX < r.left + r.width / 2);
+    } else {
+      before = drag.pointerY < r.top + r.height / 2;
+    }
+
+    if (before) {
+      area.insertBefore(drag.placeholder, targetChild);
+    } else {
+      area.insertBefore(drag.placeholder, targetChild.nextSibling);
     }
 
     playFlip(rectsTarget);

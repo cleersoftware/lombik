@@ -1,216 +1,213 @@
-  const ChartThemes = {
+const ChartThemes = {
+  'default': {
+    'background': 'transparent',
+    'text-color': '#0f172a',
+    'grid-color': '#f1f5f9',
+    'axis-color': '#94a3b8',
+    'bar-color': '#2563eb',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#2563eb',
+    'point-color': '#1d4ed8',
+    'donut-colors': [
+      '#2563eb', '#06b6d4', '#10b981', '#f59e0b',
+      '#6366f1', '#ec4899', '#0d9488', '#ea580c',
+      '#8b5cf6', '#84cc16', '#0284c7', '#d946ef'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'default': {
-        'background': 'transparent',
-        'text-color': '#1f2937',
-        'grid-color': '#e5e7eb',
-        'axis-color': '#9ca3af',
-        'bar-color': '#3b82f6',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#3b82f6',
-        'point-color': '#2563eb',
-        'donut-colors': [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
-            '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
-            '#6366f1', '#84cc16', '#06b6d4', '#a855f7'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'cobalt': {
+    'background': 'transparent',
+    'text-color': '#0f2942',
+    'grid-color': '#e2edf8',
+    'axis-color': '#7b9cb8',
+    'bar-color': '#0284c7',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#0284c7',
+    'point-color': '#0369a1',
+    'donut-colors': [
+      '#0284c7', '#14b8a6', '#3b82f6', '#06b6d4',
+      '#6366f1', '#22c55e', '#38bdf8', '#0f766e',
+      '#8b5cf6', '#10b981', '#1d4ed8', '#0284c7'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
+  'emerald': {
+    'background': 'transparent',
+    'text-color': '#062c22',
+    'grid-color': '#e6f4f1',
+    'axis-color': '#81b2a6',
+    'bar-color': '#059669',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#059669',
+    'point-color': '#047857',
+    'donut-colors': [
+      '#059669', '#10b981', '#06b6d4', '#84cc16',
+      '#0d9488', '#eab308', '#6366f1', '#14b8a6',
+      '#3b82f6', '#a855f7', '#15803d', '#f97316'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'ocean': {
-        'background': 'transparent',
-        'text-color': '#17324d',
-        'grid-color': '#d9e7f2',
-        'axis-color': '#8ca8bd',
-        'bar-color': '#2f80a8',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#2f80a8',
-        'point-color': '#246b8f',
-        'donut-colors': [
-            '#2f80a8', '#5aa6c7', '#79b8b0', '#8ca7d8',
-            '#5f84b5', '#4d9b8d', '#d59c67', '#7f9fca',
-            '#3e718f', '#a6c8c4', '#6c93b7', '#d4ad7a'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'amethyx': {
+    'background': 'transparent',
+    'text-color': '#2a2438',
+    'grid-color': '#efeaf6',
+    'axis-color': '#9b8db3',
+    'bar-color': '#7c3aed',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#7c3aed',
+    'point-color': '#6d28d9',
+    'donut-colors': [
+      '#7c3aed', '#a855f7', '#6366f1', '#ec4899',
+      '#3b82f6', '#d946ef', '#06b6d4', '#8b5cf6',
+      '#10b981', '#f43f5e', '#4f46e5', '#c026d3'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'sage': {
-        'background': 'transparent',
-        'text-color': '#263b32',
-        'grid-color': '#dfe8e2',
-        'axis-color': '#93a79a',
-        'bar-color': '#5f8d73',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#5f8d73',
-        'point-color': '#4b745e',
-        'donut-colors': [
-            '#5f8d73', '#8aaa7d', '#6b9d98', '#b59a68',
-            '#7f8fba', '#a97868', '#749b82', '#9caa73',
-            '#547d69', '#c1a978', '#688f88', '#8f7c9f'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'dune': {
+    'background': 'transparent',
+    'text-color': '#3b2518',
+    'grid-color': '#f7eee7',
+    'axis-color': '#bfa695',
+    'bar-color': '#ea580c',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#ea580c',
+    'point-color': '#c2410c',
+    'donut-colors': [
+      '#ea580c', '#d97706', '#059669', '#d946ef',
+      '#ca8a04', '#dc2626', '#0284c7', '#b45309',
+      '#7c3aed', '#16a34a', '#e11d48', '#f59e0b'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'lavender': {
-        'background': 'transparent',
-        'text-color': '#352f46',
-        'grid-color': '#e6e1ee',
-        'axis-color': '#a69bb4',
-        'bar-color': '#7766a8',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#7766a8',
-        'point-color': '#645596',
-        'donut-colors': [
-            '#7766a8', '#9b88bf', '#6f8db7', '#b37d8f',
-            '#8a9b6f', '#c49a68', '#7c789e', '#a982a8',
-            '#5f789d', '#b59a7d', '#78988d', '#9277a8'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'titanium': {
+    'background': 'transparent',
+    'text-color': '#1e293b',
+    'grid-color': '#e2e8f0',
+    'axis-color': '#94a3b8',
+    'bar-color': '#475569',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#0f172a',
+    'point-color': '#334155',
+    'donut-colors': [
+      '#334155', '#0284c7', '#4f46e5', '#0d9488',
+      '#7c3aed', '#db2777', '#ca8a04', '#059669',
+      '#64748b', '#2563eb', '#c026d3', '#ea580c'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'sandstone': {
-        'background': 'transparent',
-        'text-color': '#403830',
-        'grid-color': '#e9e2d9',
-        'axis-color': '#a99b8d',
-        'bar-color': '#b7794f',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#b7794f',
-        'point-color': '#99633f',
-        'donut-colors': [
-            '#b7794f', '#d09b67', '#8c8478', '#718b87',
-            '#aa6d63', '#c2a56f', '#7b8a9a', '#a78365',
-            '#956f7a', '#6e978f', '#c28b5e', '#8c7c69'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'hyperdrive': {
+    'background': 'transparent',
+    'text-color': '#f0f9ff',
+    'grid-color': '#1e293b',
+    'axis-color': '#475569',
+    'bar-color': '#38bdf8',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#38bdf8',
+    'point-color': '#7dd3fc',
+    'donut-colors': [
+      '#38bdf8', '#818cf8', '#34d399', '#f472b6',
+      '#fbbf24', '#a78bfa', '#22d3ee', '#fb923c',
+      '#60a5fa', '#4ade80', '#e879f9', '#f87171'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'porcelain': {
-        'background': 'transparent',
-        'text-color': '#26343a',
-        'grid-color': '#e2e8eb',
-        'axis-color': '#98a9af',
-        'bar-color': '#477f8b',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#477f8b',
-        'point-color': '#366b77',
-        'donut-colors': [
-            '#477f8b', '#6b9ca3', '#879aa7', '#8fa77c',
-            '#c28d72', '#9b86ad', '#668d7e', '#b2a06d',
-            '#54758a', '#a57580', '#7f9c9c', '#c09a68'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'stealth': {
+    'background': 'transparent',
+    'text-color': '#f8fafc',
+    'grid-color': '#1e293b',
+    'axis-color': '#475569',
+    'bar-color': '#f59e0b',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#f59e0b',
+    'point-color': '#fbbf24',
+    'donut-colors': [
+      '#f59e0b', '#38bdf8', '#10b981', '#ec4899',
+      '#8b5cf6', '#f97316', '#06b6d4', '#a855f7',
+      '#eab308', '#f43f5e', '#6366f1', '#14b8a6'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
+  'matrix': {
+    'background': 'transparent',
+    'text-color': '#ecfdf5',
+    'grid-color': '#132e27',
+    'axis-color': '#2a5a4e',
+    'bar-color': '#34d399',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#34d399',
+    'point-color': '#6ee7b7',
+    'donut-colors': [
+      '#32f6ae', '#22d3ee', '#a3e635', '#38bdf8',
+      '#10b981', '#facc15', '#818cf8', '#4ade80',
+      '#06b6d4', '#fbbf24', '#c084fc', '#2dd4bf'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'midnight': {
-        'background': 'transparent',
-        'text-color': '#e5edf5',
-        'grid-color': '#293746',
-        'axis-color': '#637387',
-        'bar-color': '#62a8d6',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#62a8d6',
-        'point-color': '#8bc4e8',
-        'donut-colors': [
-            '#62a8d6', '#d9827f', '#69c0a2', '#d9a85f',
-            '#9f8bd0', '#d28ab1', '#63bbb0', '#d99362',
-            '#7e98d1', '#9dbb67', '#62b8d0', '#b58bd0'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
+  'disco': {
+    'background': 'transparent',
+    'text-color': '#f4ebea',
+    'grid-color': '#2a2035',
+    'axis-color': '#645377',
+    'bar-color': '#c084fc',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#c084fc',
+    'point-color': '#e879f9',
+    'donut-colors': [
+      '#c084fc', '#f472b6', '#38bdf8', '#fbbf24',
+      '#a855f7', '#f43f5e', '#22d3ee', '#fb923c',
+      '#818cf8', '#e879f9', '#34d399', '#facc15'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  },
 
-    'obsidian': {
-        'background': 'transparent',
-        'text-color': '#ece9e4',
-        'grid-color': '#302f2d',
-        'axis-color': '#6d6a66',
-        'bar-color': '#c39a6b',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#c39a6b',
-        'point-color': '#d5b284',
-        'donut-colors': [
-            '#c39a6b', '#b8786d', '#759b88', '#8b85ab',
-            '#c68f63', '#8e9caa', '#ad7c8d', '#889b6d',
-            '#b08d68', '#6e938f', '#9a8196', '#c3a46f'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
-
-    'forest': {
-        'background': 'transparent',
-        'text-color': '#e3ebe4',
-        'grid-color': '#2a3a31',
-        'axis-color': '#687a6d',
-        'bar-color': '#77a887',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#77a887',
-        'point-color': '#91c09e',
-        'donut-colors': [
-            '#77a887', '#9c8066', '#6f9aa0', '#c09a62',
-            '#9c7fa8', '#ad7274', '#78956d', '#c19b7b',
-            '#6c8e82', '#aa8d62', '#668f9d', '#98799e'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
-
-    'nocturne': {
-        'background': 'transparent',
-        'text-color': '#e8e5ee',
-        'grid-color': '#332f3f',
-        'axis-color': '#706a7c',
-        'bar-color': '#9a86c0',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#9a86c0',
-        'point-color': '#b29ed8',
-        'donut-colors': [
-            '#9a86c0', '#c58692', '#759bb5', '#c5a56c',
-            '#7ba391', '#b37ba4', '#858dbb', '#c08c6c',
-            '#668f88', '#a78a65', '#8d79a9', '#7f9fb0'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    },
-
-    'ember': {
-        'background': 'transparent',
-        'text-color': '#f0e9e2',
-        'grid-color': '#3a302b',
-        'axis-color': '#786b63',
-        'bar-color': '#d18a5b',
-        'bar-border': 'transparent',
-        'bar-border-width': '1',
-        'line-color': '#d18a5b',
-        'point-color': '#e2a16f',
-        'donut-colors': [
-            '#d18a5b', '#b97872', '#7ba191', '#c4a15f',
-            '#8f84aa', '#bd8b67', '#6d9390', '#aa7c91',
-            '#c49363', '#7d9674', '#a88170', '#858ca5'
-        ],
-        'font-family': 'system-ui, -apple-system, sans-serif',
-        'font-size': 12
-    }
-  };
+  'sunset': {
+    'background': 'transparent',
+    'text-color': '#fff7ed',
+    'grid-color': '#351d19',
+    'axis-color': '#6e3c33',
+    'bar-color': '#fb923c',
+    'bar-border': 'transparent',
+    'bar-border-width': '1',
+    'line-color': '#fb923c',
+    'point-color': '#fdba74',
+    'donut-colors': [
+      '#fb923c', '#f43f5e', '#fbbf24', '#c084fc',
+      '#f87171', '#a855f7', '#eab308', '#f472b6',
+      '#38bdf8', '#34d399', '#ea580c', '#e879f9'
+    ],
+    'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+    'font-size': 12
+  }
+};
 
   window.ChartThemes = ChartThemes;
 

@@ -1,7 +1,7 @@
 import secrets
 
 
-def _generate_api_key():
+def generate_api_key():
     prefix = "sk-"
     key = secrets.token_urlsafe(32)
     return f"{prefix}{key}"

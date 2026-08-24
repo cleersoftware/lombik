@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict
-from flask import make_response
+from flask import make_response, render_template
 import json
+
 
 @dataclass
 class Result:
@@ -14,6 +15,8 @@ def htmx_response(html, *, trigger=None, redirect=None):
     """
     HTMX response helper.
 
+    html can be the filepath. This reponse wraps in flask's render_template()
+
     trigger can be:
     - str -> single event
     - list[str] -> multiple events
@@ -23,7 +26,7 @@ def htmx_response(html, *, trigger=None, redirect=None):
     - str URL for HX-Redirect
     """
 
-    response = make_response(html)
+    response = make_response(render_template(html))
 
     if trigger:
         if isinstance(trigger, str):

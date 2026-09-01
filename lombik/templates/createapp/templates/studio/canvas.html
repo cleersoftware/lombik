@@ -1,0 +1,166 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}Canvas{% endblock %}
+
+{% block studio_content %}
+<div class="px-8 py-8">
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">Canvas</h1>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Data model overview</p>
+        </div>
+        <button onclick="openModal('new-model-modal')"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+            <ion-icon name="add-outline"></ion-icon> New model
+        </button>
+    </div>
+
+    {% if not models %}
+    <div class="rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-neutral-800/40 p-16 text-center">
+        <ion-icon name="git-network-outline" class="text-5xl text-zinc-300 dark:text-zinc-600"></ion-icon>
+        <h2 class="mt-4 text-lg font-semibold text-zinc-700 dark:text-zinc-200">Nothing to model yet</h2>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Create a model to start building relationships.</p>
+    </div>
+    {% else %}
+
+    <!-- Relationship creator -->
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 p-6 mb-8">
+        <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-4">New relationship</h2>
+        <form id="relationship-form" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Parent</label>
+                <select name="parent" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for model in models %}
+                    <option value="{{ model.class_name }}">{{ model.class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Child</label>
+                <select name="child" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for model in models %}
+                    <option value="{{ model.class_name }}">{{ model.class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Type</label>
+                <select name="rel_type" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for type in relationship_types %}
+                    <option value="{{ type }}">{{ type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Lazy</label>
+                <select name="lazy" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for option in lazy_options %}
+                    <option value="{{ option }}" {% if option == "select" %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-end">
+                <button type="submit"
+                    class="w-full px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                    Create
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Model cards -->
+    <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-4">Models</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for model in models %}
+        <a href="{{ url_for('studio_bp.model_detail', module=model.module) }}"
+           class="group rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 p-6 hover:shadow-lg hover:scale-[98%] transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div class="min-w-0">
+                    <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">{{ model.class_name }}</h3>
+                    <p class="font-mono text-xs text-zinc-400 dark:text-zinc-500 mt-1 truncate">{{ model.table_name }}</p>
+                </div>
+                <ion-icon name="chevron-forward-outline" class="text-xl text-zinc-300 dark:text-zinc-600 group-hover:text-primary transition"></ion-icon>
+            </div>
+
+            <div class="mt-5 space-y-1.5">
+                {% for column in model.columns[:6] %}
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-zinc-500 dark:text-zinc-400 font-mono">{{ column.name }}</span>
+                    <span class="text-zinc-400 dark:text-zinc-500">{{ column.type }}</span>
+                </div>
+                {% endfor %}
+                {% if model.columns | length > 6 %}
+                <p class="text-xs text-zinc-400 dark:text-zinc-500 pt-1">+{{ model.columns | length - 6 }} more</p>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Relationship summary -->
+    <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mt-10 mb-4">Relationships</h2>
+    {% set has_relationships = models | selectattr("relationships") | list | length > 0 %}
+    {% if not has_relationships %}
+    <p class="text-sm text-zinc-500 dark:text-zinc-400">No relationships defined yet.</p>
+    {% else %}
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 divide-y divide-zinc-100 dark:divide-zinc-700/60 overflow-hidden">
+        {% for model in models %}
+            {% for rel in model.relationships %}
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="font-semibold text-zinc-800 dark:text-zinc-100">{{ model.class_name }}</span>
+                    <span class="font-mono text-xs text-zinc-400">{{ rel.name }}</span>
+                    <ion-icon name="arrow-forward-outline" class="text-zinc-300 dark:text-zinc-600"></ion-icon>
+                    <span class="font-semibold text-zinc-800 dark:text-zinc-100">{{ rel.target }}</span>
+                    <span class="font-mono text-xs text-zinc-400">{{ rel.back_populates or "—" }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 rounded-full text-[11px] font-medium bg-zinc-100 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-300">
+                        {{ "many" if rel.uselist else "one" }}
+                    </span>
+                    <span class="px-2 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary">{{ rel.lazy }}</span>
+                    {% if rel.secondary %}
+                    <span class="px-2 py-1 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">M2M</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+{% include "studio/partials/new_model_modal.html" %}
+
+<script>
+(function () {
+    const form = document.getElementById("relationship-form");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const payload = {
+            parent: form.parent.value,
+            child: form.child.value,
+            rel_type: form.rel_type.value,
+            lazy: form.lazy.value,
+        };
+
+        try {
+            await window.studio.request("/api/relationships", "POST", payload);
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    });
+})();
+</script>
+{% endblock %}

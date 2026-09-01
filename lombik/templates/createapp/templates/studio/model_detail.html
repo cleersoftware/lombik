@@ -1,0 +1,372 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}{{ model.class_name }}{% endblock %}
+
+{% block studio_content %}
+<div class="px-8 py-8">
+
+    <div class="flex items-start justify-between mb-8">
+        <div>
+            <a href="{{ url_for('studio_bp.models') }}" class="inline-flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-primary transition mb-3">
+                <ion-icon name="arrow-back-outline"></ion-icon> Models
+            </a>
+            <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ model.class_name }}</h1>
+            <p class="font-mono text-sm text-zinc-400 dark:text-zinc-500 mt-1">{{ model.table_name }}</p>
+        </div>
+        <button id="delete-model-btn"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition">
+            <ion-icon name="trash-outline"></ion-icon> Delete model
+        </button>
+    </div>
+
+    <!-- Columns -->
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 overflow-hidden mb-8">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-700/60">
+            <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">Columns</h2>
+            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ model.columns | length }} total</span>
+        </div>
+
+        {% if not model.columns %}
+        <div class="px-6 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">No columns defined.</div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-700/60">
+                        <th class="px-6 py-3 font-medium">Name</th>
+                        <th class="px-4 py-3 font-medium">Type</th>
+                        <th class="px-4 py-3 font-medium">Flags</th>
+                        <th class="px-4 py-3 font-medium">Foreign key</th>
+                        <th class="px-6 py-3 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700/60">
+                    {% for column in model.columns %}
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition">
+                        <td class="px-6 py-3 font-mono text-zinc-800 dark:text-zinc-100">{{ column.name }}</td>
+                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ column.type_display }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap gap-1.5">
+                                {% if column.primary_key %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary">pk</span>
+                                {% endif %}
+                                {% if not column.nullable %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-300">not null</span>
+                                {% endif %}
+                                {% if column.unique %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-100 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400">unique</span>
+                                {% endif %}
+                                {% if column.index %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">index</span>
+                                {% endif %}
+                                {% if column.default %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-300">default</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                            {% if column.fk %}{{ column.fk.table }}.{{ column.fk.column }}{% else %}—{% endif %}
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            <button class="remove-column-btn text-zinc-400 hover:text-red-500 transition" data-column-name="{{ column.name }}" title="Remove column">
+                                <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Relationships -->
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 overflow-hidden mb-8">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-700/60">
+            <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">Relationships</h2>
+            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ model.relationships | length }} total</span>
+        </div>
+
+        {% if not model.relationships %}
+        <div class="px-6 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">No relationships defined.</div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-700/60">
+                        <th class="px-6 py-3 font-medium">Name</th>
+                        <th class="px-4 py-3 font-medium">Target</th>
+                        <th class="px-4 py-3 font-medium">back_populates</th>
+                        <th class="px-4 py-3 font-medium">Cardinality</th>
+                        <th class="px-4 py-3 font-medium">Lazy</th>
+                        <th class="px-6 py-3 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700/60">
+                    {% for rel in model.relationships %}
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition">
+                        <td class="px-6 py-3 font-mono text-zinc-800 dark:text-zinc-100">{{ rel.name }}</td>
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ rel.target }}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ rel.back_populates or "—" }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-zinc-100 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-300">
+                                {{ "many" if rel.uselist else "one" }}
+                            </span>
+                            {% if rel.secondary %}
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 ml-1">M2M</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">{{ rel.lazy }}</td>
+                        <td class="px-6 py-3 text-right">
+                            <button class="remove-relationship-btn text-zinc-400 hover:text-red-500 transition" data-relationship-name="{{ rel.name }}" title="Remove relationship">
+                                <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Add column -->
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 p-6 mb-8">
+        <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-5">Add column</h2>
+        <form id="add-column-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Name</label>
+                <input name="col_name" placeholder="e.g. total_amount"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Type</label>
+                <select name="col_type" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for key, meta in column_types.items() %}
+                    <option value="{{ key }}">{{ meta.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Length <span class="text-zinc-400">(String)</span></label>
+                <input name="col_length" type="number" value="255" placeholder="255"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Foreign key table <span class="text-zinc-400">(optional)</span></label>
+                <input name="fk_table" placeholder="e.g. users"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Foreign key column</label>
+                <input name="fk_column" placeholder="id" value="id"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">On delete</label>
+                <select name="fk_ondelete" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    <option value="">—</option>
+                    {% for action in on_delete_actions %}
+                    <option value="{{ action }}">{{ action }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="md:col-span-3 flex flex-wrap gap-6 pt-1">
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input type="checkbox" name="col_not_null" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Not null
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input type="checkbox" name="col_unique" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Unique
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input type="checkbox" name="col_index" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Index
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input type="checkbox" name="col_primary_key" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Primary key
+                </label>
+            </div>
+
+            <div class="md:col-span-3 flex justify-end">
+                <button type="submit"
+                    class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                    Add column
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Add relationship -->
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 p-6">
+        <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-5">Add relationship</h2>
+        <form id="add-relationship-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Name</label>
+                <input name="rel_name" placeholder="e.g. invoices"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Target</label>
+                <select name="rel_target" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for m in models %}
+                    <option value="{{ m.class_name }}">{{ m.class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">back_populates</label>
+                <input name="rel_back_populates" placeholder="e.g. user"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Lazy</label>
+                <select name="rel_lazy" class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for option in lazy_options %}
+                    <option value="{{ option }}" {% if option == "select" %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Secondary table <span class="text-zinc-400">(M2M)</span></label>
+                <input name="rel_secondary" placeholder="optional"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div class="flex items-end pb-1">
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input type="checkbox" name="rel_uselist_false" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> One-to-one (uselist=False)
+                </label>
+            </div>
+
+            <div class="md:col-span-3 flex justify-end">
+                <button type="submit"
+                    class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                    Add relationship
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const module = {{ model.module | tojson }};
+
+    // Add column
+    const colForm = document.getElementById("add-column-form");
+    colForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const name = colForm.col_name.value.trim();
+        if (!name) {
+            window.studio.toast("Please enter a column name.", false);
+            return;
+        }
+
+        const payload = {
+            name: name,
+            type: colForm.col_type.value,
+            length: parseInt(colForm.col_length.value) || null,
+            nullable: !colForm.col_not_null.checked,
+            unique: colForm.col_unique.checked,
+            index: colForm.col_index.checked,
+            primary_key: colForm.col_primary_key.checked,
+        };
+
+        const fkTable = colForm.fk_table.value.trim();
+        if (fkTable) {
+            payload.fk = {
+                table: fkTable,
+                column: colForm.fk_column.value.trim() || "id",
+            };
+            if (colForm.fk_ondelete.value) {
+                payload.fk.ondelete = colForm.fk_ondelete.value;
+            }
+        }
+
+        try {
+            await window.studio.request("/api/models/" + module + "/columns", "POST", payload);
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    });
+
+    // Add relationship
+    const relForm = document.getElementById("add-relationship-form");
+    relForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const name = relForm.rel_name.value.trim();
+        if (!name) {
+            window.studio.toast("Please enter a relationship name.", false);
+            return;
+        }
+
+        const payload = {
+            name: name,
+            target: relForm.rel_target.value,
+            back_populates: relForm.rel_back_populates.value.trim(),
+            uselist: !relForm.rel_uselist_false.checked,
+            lazy: relForm.rel_lazy.value,
+            secondary: relForm.rel_secondary.value.trim() || null,
+        };
+
+        try {
+            await window.studio.request("/api/models/" + module + "/relationships", "POST", payload);
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    });
+
+    // Delete column / relationship / model
+    document.querySelectorAll(".remove-column-btn").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+            if (!confirm('Delete column "' + btn.dataset.columnName + '"?')) return;
+            try {
+                await window.studio.request("/api/models/" + module + "/columns/" + encodeURIComponent(btn.dataset.columnName), "DELETE");
+                window.location.reload();
+            } catch (err) {
+                window.studio.toast(err.message, false);
+            }
+        });
+    });
+
+    document.querySelectorAll(".remove-relationship-btn").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+            if (!confirm('Delete relationship "' + btn.dataset.relationshipName + '"?')) return;
+            try {
+                await window.studio.request("/api/models/" + module + "/relationships/" + encodeURIComponent(btn.dataset.relationshipName), "DELETE");
+                window.location.reload();
+            } catch (err) {
+                window.studio.toast(err.message, false);
+            }
+        });
+    });
+
+    document.getElementById("delete-model-btn").addEventListener("click", async function () {
+        if (!confirm('Delete model "{{ model.class_name }}" ({{ model.table_name }})? This only removes the model file, not its database table.')) return;
+        try {
+            await window.studio.request("/api/models/" + module, "DELETE");
+            window.location.href = "{{ url_for('studio_bp.models') }}";
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    });
+})();
+</script>
+{% endblock %}

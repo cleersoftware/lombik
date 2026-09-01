@@ -1,0 +1,237 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}Data{% endblock %}
+
+{% block studio_content %}
+<div class="px-8 py-8">
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">Data</h1>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Browse and edit live database rows</p>
+        </div>
+        {% if selected_table %}
+        <button onclick="openRowModal(null)"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+            <ion-icon name="add-outline"></ion-icon> Add row
+        </button>
+        {% endif %}
+    </div>
+
+    {% if not tables %}
+    <div class="rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-neutral-800/40 p-16 text-center">
+        <ion-icon name="server-outline" class="text-5xl text-zinc-300 dark:text-zinc-600"></ion-icon>
+        <h2 class="mt-4 text-lg font-semibold text-zinc-700 dark:text-zinc-200">No tables found</h2>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Create models and run a migration to see tables here.</p>
+        <a href="{{ url_for('studio_bp.migrations') }}"
+           class="inline-flex items-center gap-2 mt-6 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+            <ion-icon name="swap-vertical-outline"></ion-icon> Run migrations
+        </a>
+    </div>
+    {% else %}
+
+    <!-- Table selector -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        {% for table in tables %}
+        <a href="{{ url_for('studio_bp.data', table=table) }}"
+           class="px-3.5 py-2 rounded-xl text-sm font-medium transition border
+                  {% if table == selected_table %}
+                    bg-primary/10 text-primary border-primary/30
+                  {% else %}
+                    bg-white dark:bg-neutral-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-primary/40
+                  {% endif %}">
+            {{ table }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if selected_table %}
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 overflow-hidden">
+
+        <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-700/60">
+            <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">{{ selected_table }}</h2>
+            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ rows_data.total }} row{{ "s" if rows_data.total != 1 else "" }}</span>
+        </div>
+
+        {% if not rows_data.rows %}
+        <div class="px-6 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">This table is empty.</div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-700/60">
+                        {% for col in columns %}
+                        <th class="px-4 py-3 font-medium whitespace-nowrap">
+                            {{ col.name }}
+                            {% if col.primary_key %}<span class="text-primary">*</span>{% endif %}
+                        </th>
+                        {% endfor %}
+                        <th class="px-4 py-3 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700/60">
+                    {% for row in rows_data.rows %}
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition">
+                        {% for col in columns %}
+                        {% set val = row[loop.index0] %}
+                        <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300 max-w-[16rem] truncate">{{ val if val is not none else "" }}</td>
+                        {% endfor %}
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-1">
+                                <button onclick="openRowModal(JSON.parse(this.dataset.row))" data-row='{{ row | tojson }}'
+                                    class="text-zinc-400 hover:text-primary transition" title="Edit row">
+                                    <ion-icon name="create-outline" class="text-lg"></ion-icon>
+                                </button>
+                                <button onclick="deleteRow(this)" data-row='{{ row | tojson }}'
+                                    class="text-zinc-400 hover:text-red-500 transition" title="Delete row">
+                                    <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if rows_data.pages > 1 %}
+        <div class="flex items-center justify-between px-6 py-4 border-t border-zinc-100 dark:border-zinc-700/60 text-sm">
+            <span class="text-zinc-500 dark:text-zinc-400">
+                Page {{ rows_data.page }} of {{ rows_data.pages }}
+            </span>
+            <div class="flex gap-2">
+                {% if rows_data.page > 1 %}
+                <a href="{{ url_for('studio_bp.data', table=selected_table, page=rows_data.page - 1) }}"
+                   class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">Previous</a>
+                {% endif %}
+                {% if rows_data.page < rows_data.pages %}
+                <a href="{{ url_for('studio_bp.data', table=selected_table, page=rows_data.page + 1) }}"
+                   class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<!-- Row modal -->
+<div id="row-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 id="row-modal-title" class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Row</h2>
+            <button type="button" onclick="closeModal('row-modal')" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+            </button>
+        </div>
+
+        <form id="row-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        </form>
+
+        <div class="flex justify-end gap-3 mt-6">
+            <button type="button" onclick="closeModal('row-modal')"
+                class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                Cancel
+            </button>
+            <button type="submit" form="row-form"
+                class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const TABLE = {{ selected_table | tojson }};
+    const COLUMNS = {{ columns | tojson }};
+    let editingRow = null;
+
+    function openRowModal(row) {
+        editingRow = row;
+        const form = document.getElementById("row-form");
+        form.innerHTML = "";
+
+        COLUMNS.forEach(function (col) {
+            const isPk = !!col.primary_key;
+            const value = (row && row[col.name] !== undefined) ? row[col.name] : "";
+
+            const field = document.createElement("div");
+            field.innerHTML =
+                '<label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">' +
+                    window.escapeHtml(col.name) +
+                    (isPk ? ' <span class="text-primary">(pk)</span>' : "") +
+                    ' <span class="text-zinc-400">' + window.escapeHtml(col.type) + "</span>" +
+                "</label>" +
+                '<input name="' + window.escapeHtml(col.name) + '" value="' + window.escapeHtml(value) + '"' +
+                    (row && isPk ? " readonly" : "") +
+                    ' class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition' +
+                    (row && isPk ? " opacity-60" : "") +
+                '">';
+
+            form.appendChild(field);
+        });
+
+        document.getElementById("row-modal-title").textContent = row ? "Edit row" : "Add row";
+        openModal("row-modal");
+    }
+
+    window.openRowModal = openRowModal;
+
+    window.deleteRow = async function (btn) {
+        const row = JSON.parse(btn.dataset.row);
+        if (!confirm("Delete this row?")) return;
+
+        const pk = {};
+        COLUMNS.forEach(function (col) {
+            if (col.primary_key) pk[col.name] = row[col.name];
+        });
+
+        try {
+            await window.studio.request("/api/tables/" + TABLE + "/rows", "DELETE", { _pk: pk });
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    };
+
+    document.getElementById("row-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const values = {};
+        document.querySelectorAll("#row-form input").forEach(function (input) {
+            values[input.name] = input.value;
+        });
+
+        try {
+            if (editingRow) {
+                const pk = {};
+                const data = {};
+                COLUMNS.forEach(function (col) {
+                    if (col.primary_key) {
+                        pk[col.name] = editingRow[col.name];
+                    } else {
+                        data[col.name] = values[col.name];
+                    }
+                });
+                data._pk = pk;
+                await window.studio.request("/api/tables/" + TABLE + "/rows", "PATCH", data);
+            } else {
+                const data = {};
+                COLUMNS.forEach(function (col) {
+                    if (values[col.name] !== "") data[col.name] = values[col.name];
+                });
+                await window.studio.request("/api/tables/" + TABLE + "/rows", "POST", data);
+            }
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    });
+})();
+</script>
+{% endblock %}

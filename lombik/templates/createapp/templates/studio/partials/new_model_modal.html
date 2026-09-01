@@ -1,0 +1,109 @@
+<div id="new-model-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">New model</h2>
+            <button type="button" onclick="closeModal('new-model-modal')" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+            </button>
+        </div>
+
+        <form id="new-model-form" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div>
+                <label for="model-name" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Model name</label>
+                <input
+                    id="model-name"
+                    name="name"
+                    placeholder="e.g. Invoice"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+                >
+                <p class="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500">Singular name — the table name is pluralised automatically.</p>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Columns</label>
+                    <button type="button" id="add-column-btn" class="text-xs font-medium text-primary hover:underline">+ Add column</button>
+                </div>
+                <div id="columns-container" class="space-y-2"></div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('new-model-modal')"
+                    class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                    Create model
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    const COLUMN_TYPES = {{ column_types.keys() | list | tojson }};
+    const container = document.getElementById("columns-container");
+
+    function addColumnRow(name, type) {
+        name = name || "";
+        type = type || "String";
+
+        const row = document.createElement("div");
+        row.className = "column-row flex gap-2 items-center";
+
+        const options = COLUMN_TYPES.map(function (t) {
+            return '<option value="' + t + '"' + (t === type ? " selected" : "") + '>' + t + "</option>";
+        }).join("");
+
+        row.innerHTML =
+            '<input name="col_name" value="' + window.escapeHtml(name) + '" placeholder="column name" ' +
+                'class="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">' +
+            '<select name="col_type" class="w-40 px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">' +
+                options +
+            "</select>" +
+            '<button type="button" class="remove-col w-10 h-10 shrink-0 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition" title="Remove column">' +
+                '<ion-icon name="close-outline" class="text-lg m-auto"></ion-icon>' +
+            "</button>";
+
+        row.querySelector(".remove-col").addEventListener("click", function () {
+            row.remove();
+        });
+
+        container.appendChild(row);
+    }
+
+    document.getElementById("add-column-btn").addEventListener("click", function () {
+        addColumnRow();
+    });
+
+    document.getElementById("new-model-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById("model-name").value.trim();
+        const columns = Array.from(container.querySelectorAll(".column-row")).map(function (row) {
+            return {
+                name: row.querySelector('[name="col_name"]').value.trim(),
+                type: row.querySelector('[name="col_type"]').value,
+            };
+        }).filter(function (col) { return col.name; });
+
+        if (!name) {
+            window.studio.toast("Please enter a model name.", false);
+            return;
+        }
+
+        try {
+            await window.studio.request("/api/models", "POST", { name: name, columns: columns });
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    });
+
+    addColumnRow();
+})();
+</script>

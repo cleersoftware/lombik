@@ -45,6 +45,10 @@ def register_filters(app):
     def shortdatetime(dt):
         return _fmt(dt, "%b %d %H:%M").lower()
 
+    @app.template_filter("longdate")
+    def longdatetime(dt):
+        return _fmt(dt, "%A, %B %d")
+
     @app.template_filter("proper")
     def proper(s):
         return s.replace("_", " ").title()
@@ -203,6 +207,7 @@ def register_filters(app):
         if not lst:
             return []
         return sorted(lst, key=lambda x: x.get(key, ""))
+
 
     @app.template_filter("group_by")
     def group_by(lst, key):

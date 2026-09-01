@@ -1,0 +1,108 @@
+{% extends "base/base.html" %}
+
+{% block title %}{% block studio_title %}Studio{% endblock %} · Lombik Studio{% endblock %}
+
+{% block content %}
+<div class="w-full self-stretch flex min-h-screen bg-zinc-50 dark:bg-neutral-900">
+
+    <aside class="w-64 shrink-0 flex flex-col border-r border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-neutral-800">
+
+        <div class="px-6 py-5 border-b border-zinc-100 dark:border-zinc-700/60">
+            <a href="{{ url_for('core_bp.home') }}" class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">L</span>
+                <div class="leading-tight">
+                    <p class="font-bold text-zinc-800 dark:text-zinc-100">Studio</p>
+                    <p class="text-[11px] text-zinc-400 dark:text-zinc-500">by lombik</p>
+                </div>
+            </a>
+        </div>
+
+        <nav class="flex-1 px-3 py-4 space-y-1">
+            {% set nav = [
+                ("canvas", "Canvas", "git-network-outline", "studio_bp.canvas"),
+                ("models", "Models", "layers-outline", "studio_bp.models"),
+                ("data", "Data", "server-outline", "studio_bp.data"),
+                ("sql", "SQL", "terminal-outline", "studio_bp.sql"),
+                ("migrations", "Migrations", "swap-vertical-outline", "studio_bp.migrations"),
+            ] %}
+            {% for key, label, icon, endpoint in nav %}
+            <a href="{{ url_for(endpoint) }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
+                      {% if selected == key %}
+                        bg-primary/10 text-primary
+                      {% else %}
+                        text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60
+                      {% endif %}">
+                <ion-icon name="{{ icon }}" class="text-lg"></ion-icon>
+                {{ label }}
+            </a>
+            {% endfor %}
+        </nav>
+
+        <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-700/60 text-[11px] text-zinc-400 dark:text-zinc-500">
+            Restricted to superusers
+        </div>
+    </aside>
+
+    <section class="flex-1 min-w-0">
+        {% block studio_content %}{% endblock %}
+    </section>
+</div>
+
+<div id="studio-toast" class="hidden"></div>
+
+<script>
+    window.STUDIO_API_BASE = "{{ url_for('studio_bp.canvas') }}";
+
+    window.escapeHtml = function (value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+            return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c];
+        });
+    };
+
+    window.studio = (function () {
+        const base = window.STUDIO_API_BASE.replace(/\/$/, "");
+
+        function csrf() {
+            return document.querySelector('meta[name="csrf-token"]').content;
+        }
+
+        async function request(path, method, body) {
+            method = method || "GET";
+            const opts = {
+                method: method,
+                headers: { "X-CSRFToken": csrf() },
+            };
+            if (body !== undefined) {
+                opts.headers["Content-Type"] = "application/json";
+                opts.body = JSON.stringify(body);
+            }
+
+            const response = await fetch(base + path, opts);
+            let data = {};
+            try { data = await response.json(); } catch (e) { /* non-JSON body */ }
+
+            if (!response.ok || (data && data.ok === false)) {
+                const message = (data && data.error) || "Request failed (" + response.status + ")";
+                throw new Error(message);
+            }
+            return data;
+        }
+
+        function toast(message, ok) {
+            ok = ok !== false;
+            const el = document.getElementById("studio-toast");
+            if (!el) return;
+            el.textContent = message;
+            el.className = "fixed bottom-6 right-6 z-[100] px-4 py-3 rounded-xl shadow-2xl text-sm font-medium text-white transition-all duration-200 " +
+                (ok ? "bg-green-600" : "bg-red-600");
+            clearTimeout(window._studioToastTimer);
+            window._studioToastTimer = setTimeout(function () {
+                el.classList.add("hidden");
+            }, 4000);
+        }
+
+        return { request: request, toast: toast };
+    })();
+</script>
+{% endblock %}

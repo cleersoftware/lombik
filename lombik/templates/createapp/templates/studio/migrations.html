@@ -1,0 +1,69 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}Migrations{% endblock %}
+
+{% block studio_content %}
+<div class="px-8 py-8 max-w-4xl">
+
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">Migrations</h1>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Generate and apply database migrations</p>
+    </div>
+
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 p-6 mb-6">
+        <form id="migration-form" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div>
+                <label for="migration-message" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Migration message</label>
+                <input id="migration-message" name="message" value="studio migration"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div class="flex justify-between items-center">
+                <p class="text-xs text-zinc-400 dark:text-zinc-500">
+                    Runs <code class="font-mono">flask db migrate</code>, <code class="font-mono">flask db upgrade</code> and <code class="font-mono">flask triggers create</code>.
+                </p>
+                <button type="submit" id="migration-run-btn"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                    <ion-icon name="swap-vertical-outline"></ion-icon> Run migration
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <pre id="migration-output"
+         class="hidden rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-zinc-900 text-zinc-100 p-6 text-xs font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed"></pre>
+</div>
+
+<script>
+(function () {
+    const form = document.getElementById("migration-form");
+    const output = document.getElementById("migration-output");
+    const button = document.getElementById("migration-run-btn");
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const message = document.getElementById("migration-message").value.trim() || "studio migration";
+
+        button.disabled = true;
+        button.classList.add("opacity-60");
+        output.classList.remove("hidden");
+        output.textContent = "Running migrations… this may take a moment.";
+
+        try {
+            const data = await window.studio.request("/api/migrations", "POST", { message: message });
+            output.textContent = data.output || "Done.";
+            window.studio.toast("Migration completed.", true);
+        } catch (err) {
+            output.textContent = (err.message || "Migration failed.") + "\n";
+            window.studio.toast(err.message || "Migration failed.", false);
+        } finally {
+            button.disabled = false;
+            button.classList.remove("opacity-60");
+        }
+    });
+})();
+</script>
+{% endblock %}

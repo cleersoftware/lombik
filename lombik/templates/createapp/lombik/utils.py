@@ -1,4 +1,5 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
+from zoneinfo import ZoneInfo
 from dateutil.relativedelta import relativedelta
 import uuid
 import secrets 
@@ -17,6 +18,22 @@ def utc_next_month():
 
 def utc_last_month():
     return utc_now() - relativedelta(month=1)
+
+def in_months(n: int):
+    if n < 0:
+        return utc_now() - relativedelta(month=abs(n))
+    else:
+        return utc_now() + relativedelta(month=abs(n))
+
+def today():
+    return date.today()
+
+def to_date_object(dt):
+    return date.fromisoformat(dt)
+
+def to_utc_midnight(date_string: str) -> datetime:
+    naive_dt = datetime.fromisoformat(date_string)
+    return naive_dt.replace(tzinfo=ZoneInfo('UTC'))
 
 def ensure_tz_aware(dt):
     if dt and dt.tzinfo is None:

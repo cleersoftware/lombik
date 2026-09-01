@@ -66,6 +66,11 @@ class User(db.Model):
         default=utc_now
     )
 
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utc_now
+    )
+
     last_seen = db.Column(
         db.DateTime(timezone=True), 
         default=utc_now
@@ -96,4 +101,8 @@ class User(db.Model):
         db.DateTime(timezone=True)
     )
 
+    # <LOMBIK:COLUMNS>
+    # </LOMBIK:COLUMNS>
+
     # <LOMBIK:RELATIONSHIPS>
+    # </LOMBIK:RELATIONSHIPS>

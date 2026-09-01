@@ -14,9 +14,18 @@ class {{ ModelName }}(db.Model):
 
     #...build your model here
 
+    # <LOMBIK:COLUMNS>
+    # </LOMBIK:COLUMNS>
+
     created_at = db.Column(
         db.DateTime(timezone=True),
         default=utc_now
     )
 
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        default=utc_now
+    )
+
     # <LOMBIK:RELATIONSHIPS>
+    # </LOMBIK:RELATIONSHIPS>

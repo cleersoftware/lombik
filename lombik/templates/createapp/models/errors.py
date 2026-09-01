@@ -23,7 +23,13 @@ class Error(db.Model):
 
     created_at = db.Column(db.DateTime(timezone=True), default=utc_now, index=True)
 
+    updated_at = db.Column(db.DateTime(timezone=True), default=utc_now)
+
+    # <LOMBIK:COLUMNS>
+    # </LOMBIK:COLUMNS>
+
     # <LOMBIK:RELATIONSHIPS>
+    # </LOMBIK:RELATIONSHIPS>
 
     user = db.relationship("User")
 

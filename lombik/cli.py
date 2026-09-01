@@ -131,23 +131,116 @@ def plural(word: str) -> str:
     return word + "s"
 
 
+def singularize(word: str) -> str:
+    """Return a best-effort singular form of an English noun."""
+    if not word:
+        return word
+
+    lower = word.lower()
+
+    if lower.endswith("ies") and len(lower) > 3:
+        return word[:-3] + "y"
+    if lower.endswith(("sses", "shes", "ches", "xes", "zes")):
+        return word[:-2]
+    if lower.endswith("s") and not lower.endswith("ss"):
+        return word[:-1]
+    return word
+
+
 def ensure_db_import(file_path: Path):
-    """Add `from app import db` if not already present."""
+    """Add `from db import db` if not already present."""
     content = file_path.read_text()
-    if "db.Column" in content and "from app import db" not in content:
-        content = "from app import db\n" + content
+    if "db.Column" in content and "from db import db" not in content:
+        content = "from db import db\n" + content
         file_path.write_text(content)
 
 
 def detect_primary_key_type(model_file: Path) -> str:
     """Return the SQLAlchemy column type of the primary key."""
     content = model_file.read_text()
-    for line in content.splitlines():
-        if "primary_key=True" in line and "db.Column" in line:
-            match = re.search(r"db\.Column\(\s*([^,]+)", line)
-            if match:
-                return match.group(1).strip()
+    lines = content.splitlines()
+
+    for i, line in enumerate(lines):
+        if "primary_key=True" not in line:
+            continue
+
+        # Walk backwards from the primary_key line to find the db.Column( call.
+        block = "\n".join(lines[max(0, i - 4):i + 1])
+        match = re.search(r"db\.Column\(\s*([^,\n]+)", block)
+        if match:
+            return match.group(1).strip()
+
     return "db.String(36)"
+
+
+def resolve_model_file(models_dir: Path, name: str) -> Path | None:
+    """Resolve a model file by a (possibly plural) model or table name."""
+    snake = to_snake(name)
+
+    candidates = []
+    for candidate in (snake, plural(snake), singularize(snake), plural(singularize(snake))):
+        candidate = to_snake(candidate)
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+
+    for candidate in candidates:
+        path = models_dir / f"{candidate}.py"
+        if path.exists():
+            return path
+
+    # Fallback: match class name or __tablename__.
+    target_class = to_camel(name)
+    for path in sorted(models_dir.glob("*.py")):
+        if path.name == "__init__.py":
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if (
+            f"class {target_class}" in content
+            or f'__tablename__ = "{snake}"' in content
+            or f'__tablename__ = "{plural(snake)}"' in content
+        ):
+            return path
+
+    return None
+
+
+def read_model_meta(file_path: Path) -> tuple[str | None, str | None]:
+    """Return (class_name, __tablename__) from a model file."""
+    content = file_path.read_text(encoding="utf-8")
+
+    class_match = re.search(r"class\s+(\w+)\s*\(db\.Model\)", content)
+    table_match = re.search(r'__tablename__\s*=\s*"([^"]+)"', content)
+
+    return (
+        class_match.group(1) if class_match else None,
+        table_match.group(1) if table_match else None,
+    )
+
+
+def _extract_flags(raw: str) -> tuple[str, dict]:
+    """Split recognized --flags from positional tokens."""
+    flags = {"lazy": "select"}
+
+    tokens = raw.split()
+    kept = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token.startswith("--"):
+            key = token[2:]
+            if key in flags and index + 1 < len(tokens) and not tokens[index + 1].startswith("--"):
+                flags[key] = tokens[index + 1]
+                index += 2
+                continue
+            index += 1
+            continue
+        kept.append(token)
+        index += 1
+
+    return " ".join(kept), flags
 
 
 def inject_foreign_key(
@@ -226,7 +319,7 @@ def create_association_table(
     if association_file.exists():
         return
 
-    content = f'''from app import db
+    content = f'''from db import db
 
 
 class {to_camel(table_name)}(db.Model):
@@ -256,6 +349,10 @@ def cli():
 @click.argument("name")
 def createapp(name):
     target = Path.cwd() / name
+
+    if target.exists():
+        print(f"Directory '{name}' already exists.")
+        return
 
     replacements = {
         "{{SECRET_KEY}}": secrets.token_urlsafe(64),
@@ -392,15 +489,11 @@ def relate(source):
 
     Relationship types: one-to-many (default), many-to-one, one-to-one, many-to-many
     Lazy options: select, joined, subquery, dynamic, noload, raise, ...
-    """
-    raw = " ".join(source)
 
-    lazy = "select"
-    if "--lazy" in raw:
-        parts = raw.split("--lazy", 1)
-        raw = parts[0].strip()
-        lazy_part = parts[1].strip()
-        lazy = lazy_part.split()[0] if lazy_part else lazy
+    Model names may be singular or plural (e.g. tenant.id or tenants.id).
+    """
+    raw, flags = _extract_flags(" ".join(source))
+    lazy = flags["lazy"]
 
     if " to " not in raw:
         print("Invalid format. Use: parent.field to child.field [type] [--lazy lazy]")
@@ -424,7 +517,7 @@ def relate(source):
     try:
         child_model, child_field = child_raw.split(".")
     except ValueError:
-        child_model, child_field = child_raw, f"{parent_model}_id"
+        child_model, child_field = child_raw, None
 
     blueprints_dir = find_blueprints_dir()
     if not blueprints_dir:
@@ -434,25 +527,26 @@ def relate(source):
     project_root = blueprints_dir.parent
     models_dir = project_root / "models"
 
-    parent_file = models_dir / f"{plural(to_snake(parent_model))}.py"
-    child_file = models_dir / f"{plural(to_snake(child_model))}.py"
+    parent_file = resolve_model_file(models_dir, parent_model)
+    child_file = resolve_model_file(models_dir, child_model)
 
-    if not parent_file.exists() or not child_file.exists():
+    if not parent_file or not child_file:
         print("One or both models do not exist.")
         return
 
-    parent_class = to_camel(parent_model)
-    child_class = to_camel(child_model)
+    parent_class, parent_table = read_model_meta(parent_file)
+    child_class, child_table = read_model_meta(child_file)
+
+    if child_field is None:
+        child_field = f"{to_snake(parent_class)}_id"
 
     # For many-to-one, swap so that the first model is the "parent"
     if rel_type == "many-to-one":
         parent_file, child_file = child_file, parent_file
-        parent_model, child_model = child_model, parent_model
         parent_class, child_class = child_class, parent_class
+        parent_table, child_table = child_table, parent_table
         parent_field, child_field = child_field, parent_field
 
-    parent_table = plural(to_snake(parent_model))
-    child_table = plural(to_snake(child_model))
     pk_type = detect_primary_key_type(parent_file)
 
     ensure_db_import(parent_file)
@@ -460,8 +554,8 @@ def relate(source):
 
     if rel_type in ("one-to-many", "many-to-one"):
         fk_column = child_field
-        parent_rel = plural(to_snake(child_model))
-        child_rel = to_snake(parent_model)
+        parent_rel = plural(to_snake(child_class))
+        child_rel = to_snake(parent_class)
 
         inject_foreign_key(child_file, fk_column, parent_table, parent_field, pk_type=pk_type)
         inject_relationship(child_file, child_rel, parent_class, back_populates=parent_rel, many=False, lazy=lazy)
@@ -469,8 +563,8 @@ def relate(source):
 
     elif rel_type == "one-to-one":
         fk_column = child_field
-        parent_rel = to_snake(child_model)
-        child_rel = to_snake(parent_model)
+        parent_rel = to_snake(child_class)
+        child_rel = to_snake(parent_class)
 
         inject_foreign_key(child_file, fk_column, parent_table, parent_field, unique=True, pk_type=pk_type)
         inject_relationship(child_file, child_rel, parent_class, back_populates=parent_rel, many=False, lazy=lazy)
@@ -478,8 +572,8 @@ def relate(source):
 
     elif rel_type == "many-to-many":
         assoc_table_name = f"{parent_table}_{child_table}"
-        left_fk = f"{to_snake(parent_model)}_id"
-        right_fk = f"{to_snake(child_model)}_id"
+        left_fk = f"{to_snake(parent_class)}_id"
+        right_fk = f"{to_snake(child_class)}_id"
 
         create_association_table(models_dir, assoc_table_name, parent_table, child_table, left_fk, right_fk)
 
@@ -495,8 +589,8 @@ def relate(source):
         existing_models.append((assoc_table_name, assoc_class))
         update_models_init(init_file, existing_models)
 
-        parent_rel = plural(to_snake(child_model))
-        child_rel = plural(to_snake(parent_model))
+        parent_rel = plural(to_snake(child_class))
+        child_rel = plural(to_snake(parent_class))
 
         inject_relationship(
             parent_file, parent_rel, child_class,
@@ -507,7 +601,8 @@ def relate(source):
             back_populates=parent_rel, many=True, lazy=lazy, secondary=assoc_table_name
         )
 
-    print(f"Linked {parent_model} ↔ {child_model} ({rel_type}) with lazy='{lazy}'")
+    print(f"Linked {parent_class} ↔ {child_class} ({rel_type}) with lazy='{lazy}'")
+
 
 
 @cli.command()
@@ -525,6 +620,13 @@ def initdb():
 def db(message):
     subprocess.run(["flask", "db", "migrate", "-m", message], check=True)
     subprocess.run(["flask", "db", "upgrade"], check=True)
+    subprocess.run(["flask", "triggers", "create"], check=False)
+
+
+@cli.command()
+@click.argument("action", required=False, default="create")
+def trigger(action):
+    subprocess.run(["flask", "triggers", action], check=False)
 
 
 @cli.command()

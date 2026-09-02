@@ -1,5 +1,37 @@
 from lombik.constants import IRREGULAR
 
+
+def to_snake(name: str) -> str:
+    return name.strip().lower().replace(" ", "_").replace("-", "_")
+
+
+def to_camel(name: str) -> str:
+    return "".join(part.capitalize() for part in name.replace("-", "_").split("_"))
+
+
+def singularize(word: str) -> str:
+    if not word:
+        return word
+
+    lower = word.lower()
+
+    for singular, pluralized in IRREGULAR.items():
+        if lower == pluralized:
+            if word.istitle():
+                return singular.capitalize()
+            if word.isupper():
+                return singular.upper()
+            return singular
+
+    if lower.endswith("ies") and len(lower) > 3:
+        return word[:-3] + "y"
+    if lower.endswith(("sses", "shes", "ches", "xes", "zes")):
+        return word[:-2]
+    if lower.endswith("s") and not lower.endswith("ss"):
+        return word[:-1]
+    return word
+
+
 def plural(word: str) -> str:
     if not word:
         return word

@@ -2,6 +2,10 @@
 
 {% block studio_title %}Canvas{% endblock %}
 
+{% block extend_header %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.css">
+{% endblock %}
+
 {% block studio_content %}
 <div class="px-8 py-8">
 
@@ -10,10 +14,16 @@
             <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">Canvas</h1>
             <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Data model overview</p>
         </div>
-        <button onclick="openModal('new-model-modal')"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
-            <ion-icon name="add-outline"></ion-icon> New model
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ url_for('studio_bp.routes') }}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                <ion-icon name="map-outline"></ion-icon> Routes
+            </a>
+            <button onclick="openModal('new-model-modal')"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                <ion-icon name="add-outline"></ion-icon> New model
+            </button>
+        </div>
     </div>
 
     {% if not models %}
@@ -92,17 +102,56 @@
             <div class="mt-5 space-y-1.5">
                 {% for column in model.columns[:6] %}
                 <div class="flex items-center justify-between text-xs">
-                    <span class="text-zinc-500 dark:text-zinc-400 font-mono">{{ column.name }}</span>
-                    <span class="text-zinc-400 dark:text-zinc-500">{{ column.type }}</span>
+                    <div class="flex items-center gap-1 min-w-0">
+                        <span class="text-zinc-500 dark:text-zinc-400 font-mono truncate">{{ column.name }}</span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-zinc-400 dark:text-zinc-500">{{ column.type }}</span>
+                        <span role="button"
+                              onclick="event.preventDefault(); event.stopPropagation(); window.removeColumn('{{ model.module }}', '{{ column.name }}');"
+                              class="text-zinc-300 dark:text-zinc-600 hover:text-red-500 transition cursor-pointer"
+                              title="Remove column">
+                            <ion-icon name="close-outline" class="text-sm"></ion-icon>
+                        </span>
+                    </div>
                 </div>
                 {% endfor %}
                 {% if model.columns | length > 6 %}
                 <p class="text-xs text-zinc-400 dark:text-zinc-500 pt-1">+{{ model.columns | length - 6 }} more</p>
                 {% endif %}
             </div>
+
+            <div class="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-700/60 flex items-center justify-between">
+                <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ model.relationships | length }} relationship{{ "s" if model.relationships | length != 1 else "" }}</span>
+                <div class="flex items-center gap-1.5">
+                    <span role="button"
+                          onclick="event.preventDefault(); event.stopPropagation(); window.openAddColumn('{{ model.module }}');"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition pointer-events-auto">
+                        <ion-icon name="add-outline"></ion-icon> Column
+                    </span>
+                    <span role="button"
+                          onclick="event.preventDefault(); event.stopPropagation(); window.studio.generateCrud('{{ model.module }}');"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary hover:text-white transition pointer-events-auto">
+                        <ion-icon name="flash-outline"></ion-icon> Generate CRUD
+                    </span>
+                </div>
+            </div>
         </a>
         {% endfor %}
     </div>
+
+    <!-- Relationship graph -->
+    <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mt-10 mb-4">Relationship graph</h2>
+    {% if graph_nodes %}
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 p-4 mb-8">
+        <div id="relationship-graph" class="w-full" style="height: 420px;"></div>
+        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-3 text-center">
+            Drag a model node onto another model to start a relationship. Double-click a node to open its detail page.
+        </p>
+    </div>
+    {% else %}
+    <p class="text-sm text-zinc-500 dark:text-zinc-400">No models to graph yet.</p>
+    {% endif %}
 
     <!-- Relationship summary -->
     <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100 mt-10 mb-4">Relationships</h2>
@@ -140,6 +189,146 @@
 
 {% include "studio/partials/new_model_modal.html" %}
 
+<!-- Add column modal -->
+<div id="add-column-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Add column</h2>
+            <button type="button" onclick="closeModal('add-column-modal')" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+            </button>
+        </div>
+
+        <form id="add-column-form" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div>
+                <label for="add-column-name" class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Column name</label>
+                <input id="add-column-name" name="name" placeholder="e.g. total_amount"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div>
+                <label for="add-column-type" class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Type</label>
+                <select id="add-column-type" name="type"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary transition">
+                    {% for key, meta in column_types.items() %}
+                    <option value="{{ key }}">{{ meta.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="add-column-length" class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Length (String)</label>
+                <input id="add-column-length" name="length" type="number" value="255"
+                    class="w-full px-3 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-900 text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+            </div>
+
+            <div class="flex flex-wrap gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input id="add-column-not-null" type="checkbox" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Not null
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input id="add-column-unique" type="checkbox" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Unique
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                    <input id="add-column-index" type="checkbox" class="h-4 w-4 rounded border-stone-300 text-primary focus:ring-primary"> Index
+                </label>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('add-column-modal')"
+                    class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                    Add column
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Relationship popup -->
+<div id="relationship-popup" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Relationship</h2>
+            <button type="button" onclick="closeModal('relationship-popup')" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+            </button>
+        </div>
+
+        <p id="relationship-popup-label" class="text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-4"></p>
+        <div id="relationship-popup-lines" class="space-y-2 mb-6"></div>
+
+        <div class="flex justify-end">
+            <button type="button" onclick="closeModal('relationship-popup')"
+                class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    let currentColumnModel = null;
+
+    window.openAddColumn = function (module) {
+        currentColumnModel = module;
+        const form = document.getElementById("add-column-form");
+        if (form) form.reset();
+        openModal("add-column-modal");
+        document.getElementById("add-column-name").focus();
+    };
+
+    window.removeColumn = async function (module, name) {
+        if (!confirm('Delete column "' + name + '"?')) return;
+
+        try {
+            await window.studio.request("/api/models/" + module + "/columns/" + encodeURIComponent(name), "DELETE");
+            window.studio.toast("Column removed.", true);
+            window.location.reload();
+        } catch (err) {
+            window.studio.toast(err.message, false);
+        }
+    };
+
+    const form = document.getElementById("add-column-form");
+    if (form) {
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            if (!currentColumnModel) return;
+
+            const name = document.getElementById("add-column-name").value.trim();
+            if (!name) {
+                window.studio.toast("Please enter a column name.", false);
+                return;
+            }
+
+            const payload = {
+                name: name,
+                type: document.getElementById("add-column-type").value,
+                length: parseInt(document.getElementById("add-column-length").value) || null,
+                nullable: !document.getElementById("add-column-not-null").checked,
+                unique: document.getElementById("add-column-unique").checked,
+                index: document.getElementById("add-column-index").checked,
+            };
+
+            try {
+                await window.studio.request("/api/models/" + currentColumnModel + "/columns", "POST", payload);
+                window.studio.toast("Column added.", true);
+                window.location.reload();
+            } catch (err) {
+                window.studio.toast(err.message, false);
+            }
+        });
+    }
+})();
+</script>
+
 <script>
 (function () {
     const form = document.getElementById("relationship-form");
@@ -159,6 +348,131 @@
             window.location.reload();
         } catch (err) {
             window.studio.toast(err.message, false);
+        }
+    });
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
+<script>
+(function () {
+    const container = document.getElementById("relationship-graph");
+    if (!container || !window.vis) return;
+
+    const nodes = new vis.DataSet({{ graph_nodes | tojson }});
+    const edges = new vis.DataSet({{ graph_edges | tojson }});
+
+    const network = new vis.Network(container, { nodes: nodes, edges: edges }, {
+        physics: {
+            enabled: true,
+            solver: "forceAtlas2Based",
+            stabilization: { iterations: 200 },
+        },
+        interaction: { hover: true, dragNodes: true, dragView: true, zoomView: true },
+        nodes: {
+            shape: "box",
+            margin: 12,
+            widthConstraint: { minimum: 90 },
+            font: { size: 15, face: "Outfit", color: "#3f3f46" },
+        },
+        edges: {
+            font: { size: 11, align: "middle", color: "#71717a" },
+            smooth: { type: "cubicBezier", forceDirection: "horizontal", roundness: 0.4 },
+            color: { color: "#a1a1aa", highlight: "#ff6b5a" },
+        },
+    });
+
+    network.once("stabilizationIterationsDone", function () {
+        network.setOptions({ physics: { enabled: false } });
+    });
+
+    // Fallback: stop physics even if the stabilization event never fires.
+    setTimeout(function () {
+        network.setOptions({ physics: { enabled: false } });
+    }, 3500);
+
+    network.on("doubleClick", function (params) {
+        if (params.nodes.length === 1) {
+            const node = nodes.get(params.nodes[0]);
+            if (node && node.module) {
+                window.location.href = "/studio/models/" + encodeURIComponent(node.module);
+            }
+        }
+    });
+
+    network.on("click", function (params) {
+        if (params.edges.length === 1) {
+            const edge = edges.get(params.edges[0]);
+            if (!edge) return;
+
+            const label = document.getElementById("relationship-popup-label");
+            const lines = document.getElementById("relationship-popup-lines");
+
+            label.textContent = edge.label || "";
+            lines.innerHTML = "";
+
+            (edge.relations || []).forEach(function (rel) {
+                const row = document.createElement("div");
+                row.className = "flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-700/40 text-sm";
+
+                const text = document.createElement("span");
+                text.className = "text-zinc-600 dark:text-zinc-300";
+                text.textContent = rel.source + "." + rel.name + " (" + rel.cardinality + ")";
+
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "text-xs text-red-500 hover:text-red-600 font-medium";
+                button.textContent = "Remove";
+                button.addEventListener("click", async function () {
+                    if (!confirm('Delete relationship "' + rel.name + '"?')) return;
+
+                    try {
+                        await window.studio.request("/api/models/" + rel.module + "/relationships/" + encodeURIComponent(rel.name), "DELETE");
+                        window.studio.toast("Relationship removed.", true);
+                        window.location.reload();
+                    } catch (err) {
+                        window.studio.toast(err.message, false);
+                    }
+                });
+
+                row.appendChild(text);
+                row.appendChild(button);
+                lines.appendChild(row);
+            });
+
+            openModal("relationship-popup");
+        }
+    });
+
+    network.on("dragEnd", function (params) {
+        if (params.nodes.length !== 1) return;
+
+        const dragged = params.nodes[0];
+        const positions = network.getPositions();
+        const pos = positions[dragged];
+        if (!pos) return;
+
+        let closest = null;
+        let closestDistance = Infinity;
+
+        Object.keys(positions).forEach(function (id) {
+            if (id === dragged) return;
+            const other = positions[id];
+            const distance = Math.hypot(other.x - pos.x, other.y - pos.y);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = id;
+            }
+        });
+
+        if (closest && closestDistance < 120) {
+            const form = document.getElementById("relationship-form");
+            if (!form) return;
+
+            form.parent.value = dragged;
+            form.child.value = closest;
+            form.scrollIntoView({ behavior: "smooth", block: "center" });
+            window.studio.toast("Connect " + dragged + " → " + closest + ". Choose the relationship type and create.", true);
         }
     });
 })();

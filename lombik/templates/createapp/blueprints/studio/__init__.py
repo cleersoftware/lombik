@@ -1,4 +1,4 @@
-from flask import Blueprint, g, redirect, url_for
+from flask import Blueprint, g, redirect, request, url_for
 
 from lombik.flash import Flash
 
@@ -17,7 +17,7 @@ def _require_superuser():
 
     if not user:
         Flash.error("You must log in to visit Studio.")
-        return redirect(url_for("auth_bp.login"))
+        return redirect(url_for("auth_bp.login", next=request.path))
 
     if user.role != "superuser":
         Flash.error("Studio is only available to superusers.")

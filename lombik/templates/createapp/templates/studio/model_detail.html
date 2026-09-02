@@ -13,10 +13,16 @@
             <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{{ model.class_name }}</h1>
             <p class="font-mono text-sm text-zinc-400 dark:text-zinc-500 mt-1">{{ model.table_name }}</p>
         </div>
-        <button id="delete-model-btn"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition">
-            <ion-icon name="trash-outline"></ion-icon> Delete model
-        </button>
+        <div class="flex items-center gap-2">
+            <button id="generate-crud-btn"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                <ion-icon name="flash-outline"></ion-icon> Generate CRUD
+            </button>
+            <button id="delete-model-btn"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition">
+                <ion-icon name="trash-outline"></ion-icon> Delete model
+            </button>
+        </div>
     </div>
 
     <!-- Columns -->
@@ -331,6 +337,11 @@
         } catch (err) {
             window.studio.toast(err.message, false);
         }
+    });
+
+    // Generate CRUD (shared modal lives in studio/base.html)
+    document.getElementById("generate-crud-btn").addEventListener("click", function () {
+        window.studio.generateCrud(module);
     });
 
     // Delete column / relationship / model

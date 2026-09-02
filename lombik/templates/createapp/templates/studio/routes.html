@@ -1,0 +1,78 @@
+{% extends "studio/base.html" %}
+
+{% block studio_title %}Routes{% endblock %}
+
+{% block studio_content %}
+<div class="px-8 py-8">
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-zinc-800 dark:text-zinc-100">Routes</h1>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{{ rules | length }} registered routes</p>
+        </div>
+        <input id="route-search" type="search" placeholder="Filter routes…"
+            class="w-64 px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 bg-white dark:bg-neutral-800 text-sm text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition">
+    </div>
+
+    <div class="rounded-3xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-700/60">
+                        <th class="px-6 py-3 font-medium">Methods</th>
+                        <th class="px-4 py-3 font-medium">Endpoint</th>
+                        <th class="px-6 py-3 font-medium">URL</th>
+                    </tr>
+                </thead>
+                <tbody id="route-table" class="divide-y divide-zinc-100 dark:divide-zinc-700/60">
+                    {% for route in rules %}
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition" data-route-row>
+                        <td class="px-6 py-3">
+                            <div class="flex flex-wrap gap-1.5">
+                                {% for method in route.methods %}
+                                {% if method == "GET" %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{{ method }}</span>
+                                {% elif method == "POST" %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400">{{ method }}</span>
+                                {% elif method in ("PUT", "PATCH") %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">{{ method }}</span>
+                                {% elif method == "DELETE" %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400">{{ method }}</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-zinc-100 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-300">{{ method }}</span>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs text-zinc-700 dark:text-zinc-200">{{ route.endpoint }}</td>
+                        <td class="px-6 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                            {% if route.linkable %}
+                            <a href="{{ route.rule }}" class="text-primary hover:underline">{{ route.rule }}</a>
+                            {% else %}
+                            {{ route.rule }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const search = document.getElementById("route-search");
+    const rows = document.querySelectorAll("[data-route-row]");
+
+    search.addEventListener("input", function () {
+        const query = search.value.toLowerCase();
+
+        rows.forEach(function (row) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? "" : "none";
+        });
+    });
+})();
+</script>
+{% endblock %}

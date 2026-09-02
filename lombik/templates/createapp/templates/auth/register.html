@@ -1,323 +1,127 @@
 {% extends 'base/base.html' %}
+
 {% block title %}
 Register
 {% endblock %}
+
 {% block content %}
-<section class="flex gap-8 w-full h-full flex-col items-center justify-center">
+<section class="flex gap-8 w-full h-full flex-col items-center justify-center px-4">
     <a href="{{ url_for('core_bp.home') }}" class="group relative">
         <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-90 group-hover:scale-100 transition-all duration-500"></div>
-        <img 
-            class="w-52 h-52 object-contain drop-shadow-2xl group-hover:scale-95 transition-all duration-500"
+        <img
+            class="w-40 h-40 object-contain drop-shadow-2xl group-hover:scale-95 transition-all duration-500"
             src="{{ url_for('static', filename='icons/icon_512x512.png') }}"
             alt="Lombik logo">
     </a>
-    <form class="max-w-lg min-w-fit flex flex-col items-center justify-evenly gap-3">
-        <h1 class="text-lg font-semibold">Register</h1>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
-        <div class="flex flex-col gap-4">
 
+    <form id="register-form" class="w-full max-w-lg flex flex-col items-center justify-center gap-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <h1 class="text-xl font-semibold text-slate-900">Register</h1>
+
+        <div class="w-full flex flex-col gap-4">
             {% for field in register_form.fields %}
                 {% include "components/form_field.html" %}
                 {% if field.name == 'password' %}
-                <div id="password-criteria-list" class="w-full flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
-                    <span data-criterion="length"
-                            class="criteria-item text-mutedink dark:text-darkmutedink transition-all duration-300 ease-out"
-                            style="max-height: 2em; padding: 0; margin: 0; overflow: hidden;">
-                        Min 8 characters
-                    </span>
-                    <span data-criterion="special"
-                            class="criteria-item text-mutedink dark:text-darkmutedink transition-all duration-300 ease-out"
-                            style="max-height: 2em; padding: 0; margin: 0; overflow: hidden;">
-                        At least one special
-                    </span>
-                    <span data-criterion="number"
-                            class="criteria-item text-mutedink dark:text-darkmutedink transition-all duration-300 ease-out"
-                            style="max-height: 2em; padding: 0; margin: 0; overflow: hidden;">
-                        one number
-                    </span>
-                    <span data-criterion="uppercase"
-                            class="criteria-item text-mutedink dark:text-darkmutedink transition-all duration-300 ease-out"
-                            style="max-height: 2em; padding: 0; margin: 0; overflow: hidden;">
-                        one uppercase
-                    </span>
-                    <span data-criterion="lowercase"
-                            class="criteria-item text-mutedink dark:text-darkmutedink transition-all duration-300 ease-out"
-                            style="max-height: 2em; padding: 0; margin: 0; overflow: hidden;">
-                        one lowercase
-                    </span>
+                <div id="password-criteria-list" class="w-full flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
+                    <span data-criterion="length">Min 8 characters</span>
+                    <span data-criterion="special">At least one special</span>
+                    <span data-criterion="number">One number</span>
+                    <span data-criterion="uppercase">One uppercase</span>
+                    <span data-criterion="lowercase">One lowercase</span>
                 </div>
                 {% endif %}
             {% endfor %}
-
         </div>
 
         <button
+            type="submit"
             hx-post="{{ url_for('auth_bp.register_user') }}"
             hx-swap="none"
             id="submit-btn"
             disabled
-            class="w-full bg-primary rounded-xl text-white text-xs px-4 py-2"
-        >
+            class="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed">
             Register
         </button>
-        <a
-            href="{{ url_for('auth_bp.login') }}"
-            class="w-full flex items-center justify-center border border-zinc-700 rounded-xl text-xs px-4 py-2">
+
+        <a href="{{ url_for('auth_bp.login', next=next) }}"
+           class="w-full flex items-center justify-center rounded-xl border border-stone-300 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-stone-50">
             Log in
         </a>
     </form>
 </section>
+
 <script>
-    (function() {
-        const passwordInput = document.getElementById('reg-password');
-        const criteriaList = document.getElementById('password-criteria-list');
-        const confirmContainer = document.getElementById('confirm-password-container');
-        const confirmInput = document.getElementById('reg-confirm-password');
-        
-        const checkable = ['length', 'special', 'number', 'uppercase', 'lowercase'];
-        const state = {};
-    
-        checkable.forEach(name => {
-          const el = criteriaList.querySelector(`[data-criterion="${name}"]`);
-          if (el) {
-            state[name] = {
-              element: el,
-              status: 'visible',
-              timeoutIds: []
-            };
-          }
+(function () {
+    const form = document.getElementById('register-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    const username = document.getElementById('reg-username');
+    const email = document.getElementById('reg-email');
+    const password = document.getElementById('reg-password');
+    const confirmPassword = document.getElementById('reg-confirm-password');
+    const country = document.getElementById('reg-country');
+    const terms = document.getElementById('agree-terms');
+
+    const criteria = {
+        length: document.querySelector('[data-criterion="length"]'),
+        special: document.querySelector('[data-criterion="special"]'),
+        number: document.querySelector('[data-criterion="number"]'),
+        uppercase: document.querySelector('[data-criterion="uppercase"]'),
+        lowercase: document.querySelector('[data-criterion="lowercase"]'),
+    };
+
+    function checkPassword(value) {
+        criteria.length.classList.toggle('text-green-600', value.length >= 8);
+        criteria.special.classList.toggle('text-green-600', /[^A-Za-z0-9]/.test(value));
+        criteria.number.classList.toggle('text-green-600', /[0-9]/.test(value));
+        criteria.uppercase.classList.toggle('text-green-600', /[A-Z]/.test(value));
+        criteria.lowercase.classList.toggle('text-green-600', /[a-z]/.test(value));
+
+        Object.values(criteria).forEach(function (el) {
+            el.classList.remove('text-red-500');
         });
-    
-        let allMetPreviously = false;
-    
-        function evaluate(password) {
-          return {
-            length: password.length >= 8,
-            special: /[^A-Za-z0-9]/.test(password),
-            number: /[0-9]/.test(password),
-            uppercase: /[A-Z]/.test(password),
-            lowercase: /[a-z]/.test(password)
-          };
-        }
-    
 
-        function hideCriterion(name) {
-          const obj = state[name];
-          if (!obj || obj.status === 'hidden' || obj.status === 'animating-out') return;
-          
-          obj.timeoutIds.forEach(clearTimeout);
-          obj.timeoutIds = [];
-          obj.status = 'animating-out';
-          const el = obj.element;
-    
-          el.classList.add('met');
-          
-          obj.timeoutIds.push(setTimeout(() => {
-            if(obj.status !== 'animating-out') return;
-            el.classList.add('dissolving');
-            
-            obj.timeoutIds.push(setTimeout(() => {
-              if(obj.status !== 'animating-out') return;
-              el.classList.add('collapsed');
-              
-              // 4. Mark as completely hidden
-              obj.timeoutIds.push(setTimeout(() => {
-                if(obj.status !== 'animating-out') return;
-                obj.status = 'hidden';
-              }, 400));
-            }, 300));
-          }, 450));
-        }
-    
-        function showCriterion(name) {
-          const obj = state[name];
-          if (!obj || obj.status === 'visible' || obj.status === 'animating-in') return;
-          
-          obj.timeoutIds.forEach(clearTimeout);
-          obj.timeoutIds = [];
-          obj.status = 'animating-in';
-          const el = obj.element;
-    
-          el.classList.remove('collapsed');
-          
-          obj.timeoutIds.push(setTimeout(() => {
-            if(obj.status !== 'animating-in') return;
-            el.classList.remove('dissolving');
-            el.classList.remove('met');
-            
-            obj.timeoutIds.push(setTimeout(() => {
-              if(obj.status !== 'animating-in') return;
-              obj.status = 'visible';
-            }, 300));
-          }, 50)); 
-        }
-    
-        function update(password) {
-          const checks = evaluate(password);
-          const allNowMet = Object.values(checks).every(v => v);
-    
-          for (const [name, isMet] of Object.entries(checks)) {
-            if (isMet) {
-              hideCriterion(name);
-            } else {
-              showCriterion(name);
-            }
-          }
-    
-          if (allNowMet && !allMetPreviously) {
-            allMetPreviously = true;
-            confirmContainer.classList.add('show');
-            confirmInput.required = true;
-            if (typeof updateSubmitButton === 'function') updateSubmitButton();
-          } else if (!allNowMet && allMetPreviously) {
-            allMetPreviously = false;
-            confirmContainer.classList.remove('show');
-            confirmInput.required = false;
-            confirmInput.value = '';
-            if (typeof updateSubmitButton === 'function') updateSubmitButton();
-          }
-        }
-    
-        const style = document.createElement('style');
-        style.textContent = `
-          .criteria-item {
-            display: inline-flex;
-            align-items: center;
-            white-space: nowrap;
-            overflow: hidden;
-            max-width: 150px; /* Arbitrary max-width large enough for the text */
-            
-            /* The cubic-bezier gives it a smooth, natural sliding feel */
-            transition: color 0.3s ease, 
-                        opacity 0.3s ease, 
-                        transform 0.3s ease, 
-                        max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-                        margin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-origin: left center;
-            opacity: 1;
-            transform: scale(1);
-          }
-          
-          /* Step 1: Flash Green */
-          .criteria-item.met {
-            color: #768E64 !important; 
-          }
-          .dark .criteria-item.met {
-            color: #6F9B7A !important; 
-          }
-          
-          /* Step 2: Dissolve out */
-          .criteria-item.dissolving {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          
-          /* Step 3: Collapse space to slide remaining items */
-          .criteria-item.collapsed {
-            max-width: 0 !important;
-            margin-right: 0 !important;
-            margin-left: 0 !important;
-            padding-right: 0 !important;
-            padding-left: 0 !important;
-            opacity: 0;
-          }
-          
-          #confirm-password-container.show {
-            max-height: 200px !important;
-            opacity: 1 !important;
-          }
-        `;
-        document.head.appendChild(style);
-    
-        passwordInput.addEventListener('input', e => update(e.target.value));
-    
-        if (passwordInput.value) {
-          update(passwordInput.value);
-        }
-      })();
+        if (value.length && !/[^A-Za-z0-9]/.test(value)) criteria.special.classList.add('text-red-500');
+    }
 
-      (function() {
-        const form = document.getElementById('register-form');
-        const submitBtn = document.getElementById('submit-btn');
-        
-        function validateForm() {
-          const username = document.getElementById('reg-username');
-          const email = document.getElementById('reg-email');
-          const password = document.getElementById('reg-password');
-          const confirmPassword = document.getElementById('reg-confirm-password');
-          const country = document.getElementById('reg-country');
-          const agreeTerms = document.getElementById('agree-terms');
-          
-          let firstInvalid = null;
-          
-          const usernameValue = username.value.trim();
-          if (usernameValue.length < 3 || usernameValue.length > 80) {
-            if (!firstInvalid) firstInvalid = username;
-          }
-          
-          if (!email.validity.valid) {
-            if (!firstInvalid) firstInvalid = email;
-          }
-          
-          const passwordValue = password.value;
-          const passwordChecks = {
-            length: passwordValue.length >= 8,
-            special: /[^A-Za-z0-9]/.test(passwordValue),
-            number: /[0-9]/.test(passwordValue),
-            uppercase: /[A-Z]/.test(passwordValue),
-            lowercase: /[a-z]/.test(passwordValue)
-          };
-          const allPasswordCriteriaMet = Object.values(passwordChecks).every(v => v);
-          if (!allPasswordCriteriaMet) {
-            if (!firstInvalid) firstInvalid = password;
-          }
-          
-          if (confirmPassword.required) {
-            if (confirmPassword.value !== passwordValue) {
-              if (!firstInvalid) firstInvalid = confirmPassword;
-            }
-          }
-          
-          if (country.value === '') {
-            if (!firstInvalid) firstInvalid = country;
-          }
-          
-          if (!agreeTerms.checked) {
-            if (!firstInvalid) firstInvalid = agreeTerms;
-          }
-          
-          return {
-            valid: !firstInvalid,
-            firstInvalid: firstInvalid
-          };
-        }
-        
-        function updateSubmitButton() {
-          const { valid } = validateForm();
-          submitBtn.disabled = !valid;
-        }
-        
-        window.updateSubmitButton = updateSubmitButton;
-        
-        form.addEventListener('input', updateSubmitButton);
-        form.addEventListener('change', updateSubmitButton);
-        
-        form.addEventListener('submit', function(e) {
-          const { valid, firstInvalid } = validateForm();
-          if (!valid) {
+    function isValid() {
+        const passwordOk = Object.values(criteria).every(function (el) {
+            return el.classList.contains('text-green-600');
+        });
+        const match = password.value === confirmPassword.value && password.value.length > 0;
+
+        const valid =
+            username.value.trim().length >= 3 &&
+            email.validity.valid &&
+            passwordOk &&
+            match &&
+            country.value !== '' &&
+            terms.checked;
+
+        submitBtn.disabled = !valid;
+        return valid;
+    }
+
+    password.addEventListener('input', function () {
+        checkPassword(password.value);
+        isValid();
+    });
+
+    [username, email, confirmPassword, country].forEach(function (el) {
+        el.addEventListener('input', isValid);
+    });
+    terms.addEventListener('change', isValid);
+
+    form.addEventListener('submit', function (e) {
+        if (!isValid()) {
             e.preventDefault();
-            if (firstInvalid) {
-              firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              firstInvalid.classList.add('field-error');
-              setTimeout(() => {
-                firstInvalid.classList.remove('field-error');
-              }, 2000);
-            }
-          }
-        });
-        
-        updateSubmitButton();
-      })();
+        }
+    });
+
+    checkPassword(password.value);
+    isValid();
+})();
 </script>
 {% endblock %}

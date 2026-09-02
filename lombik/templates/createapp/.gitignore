@@ -1,5 +1,6 @@
 .env
 /flask_session
+/studio_history.json
 *__pycache__
 .bashrc
 .profile

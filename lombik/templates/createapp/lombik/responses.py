@@ -11,11 +11,13 @@ class Result:
     message: str = ""
 
 
-def htmx_response(html, *, trigger=None, redirect=None):
+def htmx_response(html="", *, trigger=None, redirect=None, status=200):
     """
     HTMX response helper.
 
-    html can be the filepath. This reponse wraps in flask's render_template()
+    html can be the filepath. This response wraps in flask's render_template().
+    Pass an empty string (the default) to return an empty body, e.g. when the
+    only thing you need is an HX-Redirect or HX-Trigger header.
 
     trigger can be:
     - str -> single event
@@ -26,7 +28,7 @@ def htmx_response(html, *, trigger=None, redirect=None):
     - str URL for HX-Redirect
     """
 
-    response = make_response(render_template(html))
+    response = make_response(render_template(html) if html else "", status)
 
     if trigger:
         if isinstance(trigger, str):

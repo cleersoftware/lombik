@@ -128,10 +128,17 @@ def mark_user_as_deleted(user_id_to_delete: str, user_id_deleting: str):
     """
     deleter = get_user_by_id(user_id_deleting)
 
+    if not deleter:
+        return Result(success=False, data=None, message="Deleter not found.")
+
     if deleter.role not in ADMIN_ROLES:
         return Result(success=False, data=None, message="You are not allowed to delete users.")
-    
+
     user_to_delete = get_user_by_id(user_id_to_delete)
+
+    if not user_to_delete:
+        return Result(success=False, data=None, message="User not found.")
+
     user_to_delete.status = "deleted"
     user_to_delete.deactivated_at = utc_now()
     user_to_delete.delete_at = utc_next_month()
@@ -140,4 +147,5 @@ def mark_user_as_deleted(user_id_to_delete: str, user_id_deleting: str):
         db.session.commit()
         return Result(success=True, data=None, message="User deleted successfully.")
     except Exception as e:
+        db.session.rollback()
         return Result(success=False, data=None, message=f"User could not be deleted. Error: {e}")

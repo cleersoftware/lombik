@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import lombik.dev  # noqa: F401  (watched by the reloader for Studio restarts)
+
 from lombik.configuration import register_config
 from lombik.commands import register_cli
 from lombik.filters import register_filters

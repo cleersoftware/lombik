@@ -52,6 +52,18 @@ class CheckboxField(Field):
         return "checkbox"
 
 
+@dataclass
+class TextareaField(Field):
+    rows: int = 4
+    placeholder: str | None = None
+    min_length: int | None = None
+    max_length: int | None = None
+
+    @property
+    def type(self) -> str:
+        return "textarea"
+
+
 class Form:
     def __init__(self, fields: list[Field] | None = None):
         self.fields = fields or []
@@ -77,3 +89,33 @@ class Form:
     @property
     def has_errors(self) -> bool:
         return any(field.error for field in self.fields)
+
+    @property
+    def data(self) -> dict[str, Any]:
+        return {field.name: field.value for field in self.fields}
+
+    def validate(self) -> bool:
+        for field in self.fields:
+            value = field.value
+
+            if field.required:
+                if value is None or value == "" or value is False:
+                    field.error = "This field is required."
+                    continue
+
+            if value in (None, "", False):
+                continue
+
+            if isinstance(field, InputField):
+                if field.min_length and len(str(value)) < field.min_length:
+                    field.error = f"Minimum length is {field.min_length}."
+                elif field.max_length and len(str(value)) > field.max_length:
+                    field.error = f"Maximum length is {field.max_length}."
+
+            if isinstance(field, TextareaField):
+                if field.min_length and len(str(value)) < field.min_length:
+                    field.error = f"Minimum length is {field.min_length}."
+                elif field.max_length and len(str(value)) > field.max_length:
+                    field.error = f"Maximum length is {field.max_length}."
+
+        return not self.has_errors

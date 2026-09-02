@@ -340,7 +340,7 @@ class {to_camel(table_name)}(db.Model):
 
 
 @click.group()
-@click.version_option(version="3.2.4", prog_name="lombik")
+@click.version_option(version="3.2.5", prog_name="lombik")
 def cli():
     pass
 
@@ -603,6 +603,20 @@ def relate(source):
 
     print(f"Linked {parent_class} ↔ {child_class} ({rel_type}) with lazy='{lazy}'")
 
+
+# --------------------------------------------------------------------------- #
+@cli.command()
+@click.argument("name")
+def crud(name):
+    """Generate full CRUD operations for a model.
+
+    Delegates to the generated app's ``flask crud`` command so the CLI and
+    Lombik Studio share the exact same CRUD generator.
+
+    Example:
+        lombik crud tenant
+    """
+    subprocess.run(["flask", "crud", name], check=False)
 
 
 @cli.command()

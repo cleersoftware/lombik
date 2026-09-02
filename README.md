@@ -587,6 +587,30 @@ lombik db -m "added tenants"
 
 This creates the migration and upgrades the database in one command.
 
+### CRUD generator
+
+Generate a full CRUD blueprint for any model:
+
+```bash
+lombik crud tenant
+```
+
+This reads the `Tenant` model and creates:
+
+- `blueprints/tenants/` with routes, actions, forms and queries
+- `templates/tenants/` with index, detail and form pages
+- routes under `/tenants/`
+
+Lombik maps your column types to form fields automatically. Foreign keys become
+`SelectField` dropdowns populated from the related model, booleans become
+checkboxes, and dates/numbers use the correct input types.
+
+You still need to create the model and run a migration first, so the database
+table exists.
+
+You can also preview and generate CRUD from the model detail page in Lombik
+Studio.
+
 ### Relationships
 
 Lombik also includes a relationship generator:
@@ -988,6 +1012,11 @@ lombik test_report_html
 ```
 
 Run tests and generate an HTML report.
+
+### Contributing / agent onboarding
+
+See [`skills.md`](skills.md) for the repository layout, local development loop,
+Studio API overview, testing checklist, and PR workflow.
 
 ### Sessions
 

@@ -141,7 +141,26 @@ def register_triggers(app):
             print("Created Lombik triggers.")
 
 
+def create_crud_command(app):
+    @app.cli.command("crud")
+    @click.argument("name")
+    @with_appcontext
+    def crud_cli(name):
+        from lombik.crud import generate_crud
+
+        result = generate_crud(name)
+        if not result.get("ok"):
+            print(result.get("error", "Could not generate CRUD."))
+            return
+
+        print(result.get("message"))
+        print(f"  Blueprint:  blueprints/{result['module']}/")
+        print(f"  Templates:  templates/{result['module']}/")
+        print(f"  Routes:     /{result['module']}/")
+
+
 def register_cli(app):
     initialize_db(app)
     create_superuser(app)
     register_triggers(app)
+    create_crud_command(app)

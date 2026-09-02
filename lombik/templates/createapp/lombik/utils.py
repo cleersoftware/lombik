@@ -44,7 +44,7 @@ def generate_token(byte: int = 32):
     return secrets.token_urlsafe(byte)
 
 def generate_uuid():
-    return uuid.uudi4()
+    return uuid.uuid4()
 
 def get_countries():
     return [

@@ -31,7 +31,11 @@ def authenticate_user(email: str, password: str) -> Result:
     now = utc_now()
 
     if user.status == "deleted":
-        message = "This account was deleted permanently." if ensure_tz_aware(user.delete_at) <= now else f"Account scheduled for removal: {user.delete_at.strftime('%Y-%m-%d %H:%M UTC')}."  
+        delete_at = ensure_tz_aware(user.delete_at)
+        if delete_at is None or delete_at <= now:
+            message = "This account was deleted permanently."
+        else:
+            message = f"Account scheduled for removal: {delete_at.strftime('%Y-%m-%d %H:%M UTC')}."
         return Result(
             success=False,
             message=message
@@ -55,7 +59,7 @@ def authenticate_user(email: str, password: str) -> Result:
         try:
             db.session.commit()
         except Exception as e:
-            log_error(exception=str(e))
+            log_error(exception=e)
             return Result(
                 success=False,
                 message="Could not verify user.",
@@ -130,7 +134,7 @@ def create_user(
 
     except Exception as e:
         db.session.rollback()
-        log_error(exception=str(e))
+        log_error(exception=e)
 
         return Result(
             success=False,
@@ -181,7 +185,7 @@ def change_password(
 
     except Exception as e:
         db.session.rollback()
-        log_error(exception=str(e))
+        log_error(exception=e)
 
         return Result(
             success=False,
@@ -344,7 +348,7 @@ def request_password_reset(email: str) -> Result:
 
     except Exception as e:
         db.session.rollback()
-        log_error(exception=str(e))
+        log_error(exception=e)
 
         return Result(
             success=True,
@@ -393,7 +397,7 @@ def reset_password(
 
     except Exception as e:
         db.session.rollback()
-        log_error(exception=str(e))
+        log_error(exception=e)
 
         return Result(
             success=False,

@@ -3,5 +3,5 @@ from lombik.responses import Result, htmx_response
 
 
 @{{ module_name }}_bp.post("/endpoint")
-def function():
+def action():
     ...

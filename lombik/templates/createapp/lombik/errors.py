@@ -1,5 +1,5 @@
 from werkzeug.exceptions import HTTPException
-from flask import render_template, g, request
+from flask import render_template, g, has_request_context, request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf.csrf import CSRFError
 from models import Error
@@ -24,7 +24,7 @@ def register_error_handlers(app):
             return e
 
         log_error(
-            exception=str(e),
+            exception=e,
             function=request.endpoint
         )
 
@@ -33,12 +33,21 @@ def register_error_handlers(app):
 
 def log_error(exception, function=None, args=None, kwargs=None):
     try:
+        if isinstance(exception, BaseException):
+            exception_type = type(exception).__name__
+            message = str(exception)
+        else:
+            exception_type = "Exception"
+            message = str(exception)
+
+        endpoint = request.endpoint if has_request_context() else None
+
         error = Error(
             user_id=getattr(g, "user", None).id if getattr(g, "user", None) else None,
-            endpoint=request.endpoint,
-            function=function or request.endpoint,
-            exception_type=str(type(exception).__name__),
-            message=str(exception),
+            endpoint=endpoint,
+            function=function or endpoint,
+            exception_type=exception_type,
+            message=message,
             traceback=traceback.format_exc(),
             args=json.dumps(args, default=str) if args else None,
             kwargs=json.dumps(kwargs, default=str) if kwargs else None,

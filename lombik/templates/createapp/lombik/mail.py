@@ -30,6 +30,9 @@ def send_email(
             api_key = os.getenv("RESEND_API_KEY")
             from_email = os.getenv("MAIL_FROM")
 
+            if not api_key or not from_email:
+                raise RuntimeError("RESEND_API_KEY and MAIL_FROM must be set to send email.")
+
             if isinstance(to, str):
                 to_list = [to]
             else:

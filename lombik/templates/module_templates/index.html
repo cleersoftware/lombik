@@ -1,9 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'base/base.html' %}
+
 {% block title %}
 {{ module_name }}
 {% endblock %}
+
 {% block content %}
-
-<h1>Hello there</h1>
-
+<section class="w-full h-full flex items-center justify-center">
+    <h1 class="text-2xl font-semibold">Hello from {{ module_name }}</h1>
+</section>
 {% endblock %}

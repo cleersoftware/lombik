@@ -18,9 +18,18 @@ from lombik.responses import htmx_response
 from lombik.users import get_user_by_id, mark_user_as_deleted
 
 
+def _safe_next_url(value: str | None) -> str:
+    """Only allow same-site relative redirects (prevents open redirects)."""
+    if value and value.startswith("/") and not value.startswith("//"):
+        return value
+    return ""
+
+
 @auth_bp.post("/login/authenticate")
 @limiter.limit("10 per minute")
 def authenticate():
+
+    next_url = _safe_next_url(request.form.get("next")) or url_for("core_bp.home")
 
     res = authenticate_user(
         email=request.form.get("email", ""),
@@ -32,7 +41,7 @@ def authenticate():
 
         return htmx_response(
             html="",
-            redirect=url_for("auth_bp.login"),
+            redirect=url_for("auth_bp.login", next=next_url),
         )
 
     session.clear()
@@ -42,7 +51,7 @@ def authenticate():
 
     return htmx_response(
         html="",
-        redirect=url_for("core_bp.home"),
+        redirect=next_url,
     )
 
 
@@ -52,13 +61,15 @@ def register_user():
 
     data = request.form
 
+    next_url = _safe_next_url(data.get("next")) or url_for("core_bp.home")
+
     password = data.get("password")
-    password_confirm = data.get("password_confirm")
+    password_confirm = data.get("confirm_password")
     if password != password_confirm:
         Flash.error("Passwords don't match!")
         return htmx_response(
             html="",
-            redirect=url_for("auth_bp.login"),
+            redirect=url_for("auth_bp.register"),
         )
 
     res = create_user(
@@ -74,7 +85,7 @@ def register_user():
 
         return htmx_response(
             html="",
-            redirect=url_for("auth_bp.login"),
+            redirect=url_for("auth_bp.register"),
         )
 
     session.clear()
@@ -84,8 +95,8 @@ def register_user():
 
     return htmx_response(
         html="",
-        redirect=url_for("core_bp.home"),
-    ) 
+        redirect=next_url,
+    )
 
 
 
@@ -192,6 +203,9 @@ def reset_user_password():
 
 @auth_bp.post("/delete_user")
 def delete_user():
+
+    if not getattr(g, "user", None):
+        return "", 401
 
     res = mark_user_as_deleted(
         user_id_deleting=g.user.id,

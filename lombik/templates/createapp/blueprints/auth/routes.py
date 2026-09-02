@@ -1,6 +1,6 @@
 from . import auth_bp
 from blueprints.auth.forms import *
-from flask import render_template, redirect, url_for, session
+from flask import render_template, request
 from lombik.flash import Flash
 
 
@@ -8,7 +8,8 @@ from lombik.flash import Flash
 def login():
     context = {
         "selected": "login",
-        "login_form": LoginForm()
+        "login_form": LoginForm(),
+        "next": request.args.get("next", ""),
     }
     return render_template("auth/login.html", **context)
 
@@ -17,7 +18,8 @@ def login():
 def register():
     context = {
         "selected": "register",
-        "register_form": RegisterForm()
+        "register_form": RegisterForm(),
+        "next": request.args.get("next", ""),
     }
     return render_template("auth/register.html", **context)
 

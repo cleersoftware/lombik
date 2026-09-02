@@ -33,6 +33,7 @@ from sqlalchemy import (
 )
 
 from db import db
+from lombik.strings import plural, singularize, to_camel, to_snake
 
 
 # --------------------------------------------------------------------------- #
@@ -43,22 +44,8 @@ MODELS_DIR = PROJECT_ROOT / "models"
 
 
 # --------------------------------------------------------------------------- #
-# Naming helpers (mirrors the CLI so generated code stays consistent)
+# Naming helpers now live in lombik.strings so the CLI and Studio share them.
 # --------------------------------------------------------------------------- #
-IRREGULAR = {
-    "child": "children", "person": "people", "man": "men", "woman": "women",
-    "mouse": "mice", "goose": "geese", "tooth": "teeth", "foot": "feet",
-    "ox": "oxen", "louse": "lice", "sheep": "sheep", "deer": "deer",
-    "fish": "fish", "series": "series", "species": "species",
-    "knife": "knives", "wife": "wives", "life": "lives", "leaf": "leaves",
-    "wolf": "wolves", "calf": "calves", "half": "halves", "loaf": "loaves",
-    "thief": "thieves", "shelf": "shelves", "self": "selves", "elf": "elves",
-    "hero": "heroes", "potato": "potatoes", "tomato": "tomatoes",
-    "echo": "echoes", "torpedo": "torpedoes", "veto": "vetoes",
-    "photo": "photos", "piano": "pianos", "halo": "halos", "memo": "memos",
-    "logo": "logos", "video": "videos", "studio": "studios",
-}
-
 PYTHON_KEYWORDS = set(keyword.kwlist)
 
 # Names we refuse to let a model/table use.
@@ -84,54 +71,6 @@ COLUMN_TYPES = {
 RELATIONSHIP_TYPES = ("one-to-many", "many-to-one", "one-to-one", "many-to-many")
 LAZY_OPTIONS = ("select", "joined", "subquery", "dynamic", "noload", "raise")
 ON_DELETE_ACTIONS = ("CASCADE", "SET NULL", "RESTRICT", "NO ACTION", "SET DEFAULT")
-
-
-def to_snake(name: str) -> str:
-    return name.strip().lower().replace(" ", "_").replace("-", "_")
-
-
-def to_camel(name: str) -> str:
-    return "".join(part.capitalize() for part in name.replace("-", "_").split("_"))
-
-
-def plural(word: str) -> str:
-    if not word:
-        return word
-    lower = word.lower()
-    if lower in IRREGULAR:
-        result = IRREGULAR[lower]
-        if word.istitle():
-            return result.capitalize()
-        if word.isupper():
-            return result.upper()
-        return result
-    if lower.endswith("y") and len(lower) > 1 and lower[-2] not in "aeiou":
-        return word[:-1] + "ies"
-    if lower.endswith(("s", "x", "z", "ch", "sh")):
-        return word + "es"
-    if lower.endswith("o"):
-        return word + "s"
-    return word + "s"
-
-
-def singularize(word: str) -> str:
-    if not word:
-        return word
-    lower = word.lower()
-    for singular, pluralized in IRREGULAR.items():
-        if lower == pluralized:
-            if word.istitle():
-                return singular.capitalize()
-            if word.isupper():
-                return singular.upper()
-            return singular
-    if lower.endswith("ies") and len(lower) > 3:
-        return word[:-3] + "y"
-    if lower.endswith(("sses", "shes", "ches", "xes", "zes")):
-        return word[:-2]
-    if lower.endswith("s") and not lower.endswith("ss"):
-        return word[:-1]
-    return word
 
 
 def sanitize_identifier(value: str) -> str:

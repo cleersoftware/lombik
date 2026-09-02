@@ -4,10 +4,12 @@ Every endpoint in this module is reached through the ``studio_bp`` blueprint,
 whose ``before_request`` hook restricts access to superusers. The functions
 here are thin HTTP adapters over the service layer in ``lombik.studio``.
 """
-from flask import jsonify, request
+import time
+
+from flask import current_app, jsonify, request
 
 from . import studio_bp
-from lombik import studio
+from lombik import crud, history, studio
 
 
 def _payload() -> dict:
@@ -34,6 +36,7 @@ def api_list_models():
 
 
 @studio_bp.post("/api/models")
+@history.track
 def api_create_model():
     data = _payload()
     columns = data.get("columns") or []
@@ -56,32 +59,83 @@ def api_get_model(module):
     return jsonify(info)
 
 
+@studio_bp.get("/api/health")
+def api_health():
+    return jsonify({"ok": True})
+
+
+@studio_bp.get("/api/history")
+def api_history_log():
+    return jsonify(history.log())
+
+
+@studio_bp.post("/api/history/undo")
+def api_history_undo():
+    return _json(history.undo())
+
+
+@studio_bp.post("/api/history/redo")
+def api_history_redo():
+    return _json(history.redo())
+
+
+@studio_bp.post("/api/restart")
+def api_restart_server():
+    if not current_app.debug:
+        return jsonify({"ok": False, "error": "Restart is only available in debug mode."}), 400
+
+    dev_file = studio.PROJECT_ROOT / "lombik" / "dev.py"
+    try:
+        dev_file.write_text(f'RESTART_TOKEN = "{time.time()}"\n')
+    except OSError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+    return jsonify({"ok": True, "message": "Restarting development server…"})
+
+
+@studio_bp.post("/api/models/<module>/crud/preview")
+def api_crud_preview(module):
+    return jsonify(crud.preview_crud(module))
+
+
+@studio_bp.post("/api/models/<module>/crud")
+@history.track
+def api_crud_generate(module):
+    return _json(crud.generate_crud(module))
+
+
 @studio_bp.delete("/api/models/<module>")
+@history.track
 def api_delete_model(module):
     return _json(studio.delete_model(module))
 
 
 @studio_bp.post("/api/models/<module>/columns")
+@history.track
 def api_add_column(module):
     return _json(studio.add_column(module, _payload()))
 
 
 @studio_bp.delete("/api/models/<module>/columns/<name>")
+@history.track
 def api_remove_column(module, name):
     return _json(studio.remove_column(module, name))
 
 
 @studio_bp.post("/api/models/<module>/relationships")
+@history.track
 def api_add_relationship(module):
     return _json(studio.add_relationship_line(module, _payload()))
 
 
 @studio_bp.delete("/api/models/<module>/relationships/<name>")
+@history.track
 def api_remove_relationship(module, name):
     return _json(studio.remove_relationship(module, name))
 
 
 @studio_bp.post("/api/relationships")
+@history.track
 def api_create_relationship():
     data = _payload()
     return _json(

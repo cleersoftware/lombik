@@ -7,5 +7,5 @@ from lombik.responses import Result, htmx_response
 
 
 @{{ module_name }}_bp.get("/resource")
-def function():
+def query():
     ...

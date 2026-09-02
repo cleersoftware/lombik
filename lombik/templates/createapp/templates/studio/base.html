@@ -24,6 +24,7 @@
                 ("data", "Data", "server-outline", "studio_bp.data"),
                 ("sql", "SQL", "terminal-outline", "studio_bp.sql"),
                 ("migrations", "Migrations", "swap-vertical-outline", "studio_bp.migrations"),
+                ("routes", "Routes", "map-outline", "studio_bp.routes"),
             ] %}
             {% for key, label, icon, endpoint in nav %}
             <a href="{{ url_for(endpoint) }}"
@@ -39,8 +40,27 @@
             {% endfor %}
         </nav>
 
-        <div class="px-6 py-4 border-t border-zinc-100 dark:border-zinc-700/60 text-[11px] text-zinc-400 dark:text-zinc-500">
-            Restricted to superusers
+        <div class="px-3 py-4 border-t border-zinc-100 dark:border-zinc-700/60 space-y-2">
+            <div class="flex items-center gap-2">
+                <button id="undo-btn" type="button"
+                    class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <ion-icon name="arrow-undo-outline"></ion-icon> Undo
+                </button>
+                <button id="redo-btn" type="button"
+                    class="flex-1 inline-flex items-center justify-center gap-1 px-2 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <ion-icon name="arrow-redo-outline"></ion-icon> Redo
+                </button>
+            </div>
+            <button id="restart-server-btn" type="button"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <ion-icon name="refresh-outline"></ion-icon> Restart server
+            </button>
+            <button id="history-btn" type="button"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                <ion-icon name="time-outline"></ion-icon> History
+            </button>
+            <p id="restart-status" class="hidden text-[11px] text-amber-500 dark:text-amber-400 text-center">Restarting…</p>
+            <p class="text-center text-[11px] text-zinc-400 dark:text-zinc-500">Restricted to superusers</p>
         </div>
     </aside>
 
@@ -50,6 +70,51 @@
 </div>
 
 <div id="studio-toast" class="hidden"></div>
+
+<!-- Generate CRUD modal (shared by Canvas and model detail pages) -->
+<div id="crud-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Generate CRUD</h2>
+            <button type="button" onclick="closeModal('crud-modal')" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+            </button>
+        </div>
+
+        <p id="crud-modal-message" class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Loading preview…</p>
+        <div id="crud-files" class="space-y-1 mb-6"></div>
+
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeModal('crud-modal')"
+                class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                Cancel
+            </button>
+            <button type="button" id="crud-generate-btn"
+                class="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Generate & Restart
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- History modal -->
+<div id="history-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100">History</h2>
+            <button type="button" onclick="closeModal('history-modal')" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition">
+                <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+            </button>
+        </div>
+        <div id="history-list" class="space-y-2"></div>
+        <div class="flex justify-end mt-6">
+            <button type="button" onclick="closeModal('history-modal')"
+                class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-zinc-600 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700/60 transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
     window.STUDIO_API_BASE = "{{ url_for('studio_bp.canvas') }}";
@@ -102,7 +167,172 @@
             }, 4000);
         }
 
-        return { request: request, toast: toast };
+        function restartServer(skipConfirm) {
+            const button = document.getElementById("restart-server-btn");
+            const status = document.getElementById("restart-status");
+
+            if (!skipConfirm && !confirm("Restart the development server?")) return;
+
+            button.disabled = true;
+            status.classList.remove("hidden");
+            status.textContent = "Restarting…";
+
+            try {
+                request("/api/restart", "POST").catch(function () { /* server may restart before responding */ });
+            } catch (e) { /* ignore */ }
+
+            let attempts = 0;
+            const timer = setInterval(async function () {
+                attempts += 1;
+                status.textContent = "Waiting for server… (" + attempts + "s)";
+
+                try {
+                    const response = await fetch(base + "/api/health");
+                    if (response.ok) {
+                        clearInterval(timer);
+                        status.textContent = "Server is back. Reloading…";
+                        window.location.reload();
+                    }
+                } catch (e) { /* still down */ }
+
+                if (attempts > 60) {
+                    clearInterval(timer);
+                    status.textContent = "Server did not come back. Restart manually.";
+                    button.disabled = false;
+                }
+            }, 1000);
+        }
+
+        document.getElementById("restart-server-btn").addEventListener("click", function () {
+            restartServer(false);
+        });
+
+        let currentCrudModule = null;
+
+        function generateCrud(module) {
+            currentCrudModule = module;
+
+            const message = document.getElementById("crud-modal-message");
+            const files = document.getElementById("crud-files");
+            const generateBtn = document.getElementById("crud-generate-btn");
+
+            message.textContent = "Loading preview…";
+            files.innerHTML = "";
+            generateBtn.disabled = true;
+            generateBtn.textContent = "Generate & Restart";
+            openModal("crud-modal");
+
+            request("/api/models/" + module + "/crud/preview", "POST")
+                .then(function (data) {
+                    if (data.exists) {
+                        message.textContent = "A blueprint for '" + data.module + "' already exists. Remove it first if you want to regenerate.";
+                        files.innerHTML = "";
+                        generateBtn.disabled = true;
+                        return;
+                    }
+
+                    const paths = Object.keys(data.files || {});
+                    message.textContent = "This will create " + paths.length + " files:";
+                    files.innerHTML = paths.map(function (path) {
+                        return '<div class="font-mono text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700/60 rounded-lg px-3 py-1.5">' +
+                            window.escapeHtml(path) + '</div>';
+                    }).join("");
+                    generateBtn.disabled = false;
+                })
+                .catch(function (err) {
+                    message.textContent = err.message;
+                    files.innerHTML = "";
+                    generateBtn.disabled = true;
+                });
+        }
+
+        document.getElementById("crud-generate-btn").addEventListener("click", async function () {
+            if (!currentCrudModule) return;
+
+            const btn = document.getElementById("crud-generate-btn");
+            btn.disabled = true;
+            btn.textContent = "Generating…";
+
+            try {
+                await request("/api/models/" + currentCrudModule + "/crud", "POST");
+                document.getElementById("crud-modal-message").textContent = "CRUD generated. Restarting server…";
+                toast("CRUD generated. Restarting server…", true);
+                closeModal("crud-modal");
+                restartServer(true);
+            } catch (err) {
+                toast(err.message, false);
+                btn.disabled = false;
+                btn.textContent = "Generate & Restart";
+            }
+        });
+
+        async function undo() {
+            const button = document.getElementById("undo-btn");
+            button.disabled = true;
+
+            try {
+                const data = await request("/api/history/undo", "POST");
+                toast(data.message || "Undo applied.", true);
+                window.location.reload();
+            } catch (err) {
+                toast(err.message, false);
+                button.disabled = false;
+            }
+        }
+
+        async function redo() {
+            const button = document.getElementById("redo-btn");
+            button.disabled = true;
+
+            try {
+                const data = await request("/api/history/redo", "POST");
+                toast(data.message || "Redo applied.", true);
+                window.location.reload();
+            } catch (err) {
+                toast(err.message, false);
+                button.disabled = false;
+            }
+        }
+
+        async function openHistory() {
+            const list = document.getElementById("history-list");
+            list.innerHTML = '<p class="text-sm text-zinc-400 dark:text-zinc-500">Loading…</p>';
+            openModal("history-modal");
+
+            try {
+                const data = await request("/api/history", "GET");
+                const items = (data.undo || []).slice().reverse();
+
+                if (!items.length) {
+                    list.innerHTML = '<p class="text-sm text-zinc-400 dark:text-zinc-500">No Studio changes recorded yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = items.map(function (entry) {
+                    const time = new Date(entry.time * 1000).toLocaleTimeString();
+                    const files = (entry.summary || []).slice(0, 4).map(function (path) {
+                        return '<div class="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">' + window.escapeHtml(path) + '</div>';
+                    }).join("");
+                    const extra = (entry.summary || []).length > 4 ? '<div class="text-[11px] text-zinc-400">+' + (entry.summary.length - 4) + ' more</div>' : "";
+
+                    return '<div class="px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-700/40 text-sm">' +
+                        '<div class="flex items-center justify-between">' +
+                            '<span class="font-medium text-zinc-700 dark:text-zinc-200">' + time + '</span>' +
+                            '<span class="text-xs text-zinc-400">' + (entry.summary || []).length + ' file(s)</span>' +
+                        '</div>' +
+                        '<div class="mt-1 space-y-0.5">' + files + extra + '</div>' +
+                    '</div>';
+                }).join("");
+            } catch (err) {
+                list.innerHTML = '<p class="text-sm text-red-500">' + window.escapeHtml(err.message) + '</p>';
+            }
+        }
+
+        document.getElementById("undo-btn").addEventListener("click", undo);
+        document.getElementById("redo-btn").addEventListener("click", redo);
+        document.getElementById("history-btn").addEventListener("click", openHistory);
+
+        return { request: request, toast: toast, restart: restartServer, generateCrud: generateCrud, undo: undo, redo: redo, openHistory: openHistory };
     })();
 </script>
 {% endblock %}

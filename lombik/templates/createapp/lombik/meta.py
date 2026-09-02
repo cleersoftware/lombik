@@ -15,7 +15,7 @@ def register_metadata(app):
     
     @app.route("/llms.txt")
     def llms():
-        return send_from_directory("static", "llms.tct")
+        return send_from_directory("static", "llms.txt")
 
     
 

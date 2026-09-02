@@ -1,9 +1,7 @@
 from flask import render_template
 from . import {{ module_name }}_bp
 
-@{{ module_name }}_bp.route("/")
+
+@{{ module_name }}_bp.get("/")
 def home():
-    context = {
-        "selected": "{{ module_name }}",
-    }
-    return "Hello from {{ module_name }}"
+    return render_template("{{ module_name }}/index.html")

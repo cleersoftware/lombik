@@ -1,14 +1,15 @@
 """
 Color themes for generated apps.
 
-Themes are small dictionaries of CSS custom properties. The active theme is
-persisted to ``instance/theme.json`` (filesystem-local, not the database) and
-injected into templates as an inline ``<style>`` block. Changing a theme is a
+Built-in themes plus user-created custom themes. The active theme is persisted
+to ``instance/theme.json`` (filesystem-local, not the database) and injected
+into templates as an inline ``<style>`` block. Managing themes is a
 superuser-only action.
 """
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -17,12 +18,19 @@ THEME_FILE = INSTANCE_DIR / "theme.json"
 
 DEFAULT_THEME = "coral"
 
+# Every token a theme must define. Used by the theme editor and chart theming.
+TOKENS = [
+    "canvas", "surface", "raised", "line", "line-strong",
+    "ink", "ink-muted", "brand", "brand-ink",
+    "success", "warning", "danger",
+]
+
 
 def _palette(light, dark):
     return {"light": light, "dark": dark}
 
 
-THEMES = {
+BUILTIN_THEMES = {
     "coral": {
         "name": "Coral",
         "palette": _palette(
@@ -121,48 +129,141 @@ THEMES = {
 }
 
 
+# --------------------------------------------------------------------------- #
+# Persistence
+# --------------------------------------------------------------------------- #
+def _load_data() -> dict:
+    data = {"active": DEFAULT_THEME, "custom": {}}
+    try:
+        raw = json.loads(THEME_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return data
+
+    # Accept the legacy ``{"theme": "..."}`` shape too.
+    data["active"] = raw.get("active", raw.get("theme", DEFAULT_THEME))
+    if isinstance(raw.get("custom"), dict):
+        data["custom"] = raw["custom"]
+    return data
+
+
+def _save_data(data: dict) -> None:
+    INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
+    THEME_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _all_themes() -> dict:
+    themes = dict(BUILTIN_THEMES)
+    data = _load_data()
+    for name, spec in data["custom"].items():
+        if isinstance(spec, dict) and spec.get("light") and spec.get("dark"):
+            themes[name] = {
+                "name": spec.get("name") or name,
+                "palette": {"light": spec["light"], "dark": spec["dark"]},
+            }
+    return themes
+
+
+# --------------------------------------------------------------------------- #
+# Read API
+# --------------------------------------------------------------------------- #
 def available_themes() -> list[dict]:
     return [
-        {
-            "id": theme_id,
-            "name": theme["name"],
-            "light": theme["palette"]["light"],
-            "dark": theme["palette"]["dark"],
-        }
-        for theme_id, theme in THEMES.items()
+        {"id": theme_id, "name": theme["name"],
+         "light": theme["palette"]["light"], "dark": theme["palette"]["dark"]}
+        for theme_id, theme in _all_themes().items()
     ]
 
 
 def active_theme_id() -> str:
-    theme = DEFAULT_THEME
-    try:
-        data = json.loads(THEME_FILE.read_text(encoding="utf-8"))
-        theme = data.get("theme", DEFAULT_THEME)
-    except (OSError, json.JSONDecodeError):
-        pass
-    return theme if theme in THEMES else DEFAULT_THEME
+    theme = _load_data()["active"]
+    return theme if theme in _all_themes() else DEFAULT_THEME
 
 
 def get_active_theme() -> dict:
-    return THEMES[active_theme_id()]["palette"]
+    return _all_themes()[active_theme_id()]["palette"]
 
 
+def is_custom(name: str) -> bool:
+    return name in _load_data()["custom"]
+
+
+# --------------------------------------------------------------------------- #
+# Write API
+# --------------------------------------------------------------------------- #
 def save_theme(name: str) -> bool:
-    if name not in THEMES:
+    """Activate an existing (built-in or custom) theme."""
+    if name not in _all_themes():
         return False
-    INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
-    THEME_FILE.write_text(json.dumps({"theme": name}, indent=2), encoding="utf-8")
+    data = _load_data()
+    data["active"] = name
+    _save_data(data)
     return True
 
 
+def _slugify(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
+
+
+def _valid_color(value: str) -> bool:
+    return bool(re.fullmatch(r"#[0-9a-fA-F]{6}", value or ""))
+
+
+def create_theme(name: str, light: dict, dark: dict) -> tuple[bool, str | None]:
+    slug = _slugify(name)
+    if not slug:
+        return False, "Please give the theme a name."
+    if slug in BUILTIN_THEMES:
+        return False, "That name is reserved for a built-in theme."
+
+    for token in TOKENS:
+        if not _valid_color(light.get(token)) or not _valid_color(dark.get(token)):
+            return False, f"Invalid color for '{token}'."
+
+    data = _load_data()
+    data["custom"][slug] = {"name": name.strip(), "light": light, "dark": dark}
+    data["active"] = slug
+    _save_data(data)
+    return True, None
+
+
+def delete_theme(name: str) -> bool:
+    data = _load_data()
+    if name not in data["custom"]:
+        return False
+    del data["custom"][name]
+    if data["active"] == name:
+        data["active"] = DEFAULT_THEME
+    _save_data(data)
+    return True
+
+
+# --------------------------------------------------------------------------- #
+# Rendering
+# --------------------------------------------------------------------------- #
 def theme_css() -> str:
-    """Render the active palette as a ``:root`` / ``.dark`` style block."""
     palette = get_active_theme()
 
     def block(variables: dict) -> str:
         return "\n".join(f"  --{key}: {value};" for key, value in variables.items())
 
     return f":root {{\n{block(palette['light'])}\n}}\n.dark {{\n{block(palette['dark'])}\n}}"
+
+
+def chart_theme_json() -> str:
+    """Inline light/dark theme JSON for the bundled chart elements."""
+    palette = get_active_theme()
+
+    def block(variables: dict) -> dict:
+        return {
+            "text-color": variables["ink"],
+            "grid-color": variables["line"],
+            "axis-color": variables["ink-muted"],
+            "bar-color": variables["brand"],
+            "line-color": variables["brand"],
+            "point-color": variables["brand"],
+        }
+
+    return json.dumps({"light": block(palette["light"]), "dark": block(palette["dark"])})
 
 
 def register_themes(app):
@@ -172,4 +273,6 @@ def register_themes(app):
             "theme_css": theme_css,
             "active_theme_id": active_theme_id(),
             "available_themes": available_themes(),
+            "chart_theme_json": chart_theme_json,
+            "theme_tokens": TOKENS,
         }

@@ -169,23 +169,28 @@ lombik superuser
 ```
 
 Once an owner exists, `/admin` becomes a live, HTMX-powered admin panel for
-superusers:
+superusers, split into four pages:
 
-- **Stats** — total errors, errors in the last 24h, users and table count.
-- **Errors** — the full error log, newest first, auto-refreshing. Each record
-  captures the exception type, message, traceback, function, request
-  method/path, IP, user and optional tenant id.
-- **Schema** — every table with its fields and constraints.
-- **Appearance** — pick one of the built-in color themes.
+- **Errors** (the main page) — stats, day-by-day and hour-by-hour error charts
+  (using the bundled chart elements), and the full error log newest first,
+  auto-refreshing every few seconds. Each record captures the exception type,
+  message, traceback, function, request method/path, IP, user and optional
+  tenant id.
+- **Schema** — collapsible tables with their fields, types and constraints.
+- **Appearance** — activate a built-in theme or create a custom one with color
+  pickers, name it, and save it to the filesystem.
+- **Guide** — a markdown handbook covering the structure, ideology and the
+  recommended build flows.
 
 ---
 
 ## Themes
 
 Themes live in `application/themes.py` and are rendered as CSS custom
-properties. The active theme is stored in `instance/theme.json` — a local
-filesystem file, not the database — and can be changed by superusers on the
-admin page. Add a new palette to `THEMES` and it shows up automatically.
+properties. The active theme and any custom themes are stored in
+`instance/theme.json` — a local filesystem file, not the database. Built-in
+themes ship with the scaffold; custom themes can be created, activated and
+deleted from the admin panel.
 
 ---
 

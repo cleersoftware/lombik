@@ -1,0 +1,18 @@
+<nav class="flex items-center gap-1 -mx-1 overflow-x-auto no-scrollbar">
+    <a href="{{ url_for('admin_bp.index') }}"
+       class="whitespace-nowrap px-3 py-1.5 rounded-lg text-sm {% if active == 'errors' %}bg-line text-ink font-medium{% else %}text-ink-muted hover:text-ink{% endif %}">
+        <ion-icon name="bug-outline" class="mr-1.5"></ion-icon>Errors
+    </a>
+    <a href="{{ url_for('admin_bp.schema') }}"
+       class="whitespace-nowrap px-3 py-1.5 rounded-lg text-sm {% if active == 'schema' %}bg-line text-ink font-medium{% else %}text-ink-muted hover:text-ink{% endif %}">
+        <ion-icon name="layers-outline" class="mr-1.5"></ion-icon>Schema
+    </a>
+    <a href="{{ url_for('admin_bp.appearance') }}"
+       class="whitespace-nowrap px-3 py-1.5 rounded-lg text-sm {% if active == 'appearance' %}bg-line text-ink font-medium{% else %}text-ink-muted hover:text-ink{% endif %}">
+        <ion-icon name="color-palette-outline" class="mr-1.5"></ion-icon>Appearance
+    </a>
+    <a href="{{ url_for('admin_bp.guide') }}"
+       class="whitespace-nowrap px-3 py-1.5 rounded-lg text-sm {% if active == 'guide' %}bg-line text-ink font-medium{% else %}text-ink-muted hover:text-ink{% endif %}">
+        <ion-icon name="book-outline" class="mr-1.5"></ion-icon>Guide
+    </a>
+</nav>

@@ -14,8 +14,8 @@ helping a user build an app with it.
 
 - A **scaffold engine**, not a runtime framework. The `lombik` CLI copies
   `lombik/templates/createapp/` into a new project and fills in placeholders.
-- A **command-based generator**. There is no admin UI; everything is done with
-  `lombik <command>` or `flask <command>`.
+- A **command-based generator**. Structure is created with `lombik <command>`
+  or `flask <command>`; the only graphical surface is the owner admin panel.
 - An **HTMX-first** application template. Pages are server-rendered Jinja2
   templates that swap fragments via `hx-*` attributes — no SPA.
 
@@ -120,11 +120,19 @@ split-card layout (`templates/auth/base.html`).
 - **Semantic tokens, never raw hex.** Reuse `canvas`, `surface`, `ink`, `brand`,
   etc. so light/dark works automatically.
 
+### Admin panel
+
+`/admin` is owner-only. It has four pages: **Errors** (live error log + charts),
+**Schema** (collapsible tables), **Appearance** (built-in + custom themes with
+color pickers) and **Guide** (a markdown handbook rendered from
+`application/guide.md`).
+
 ### Themes
 
 Themes are defined in `application/themes.py` and rendered as CSS custom
-properties. The active theme is stored in `instance/theme.json` (filesystem,
-not the database) and can be changed by superusers on the admin page.
+properties. The active theme and custom themes are stored in
+`instance/theme.json` (filesystem, not the database) and managed by superusers
+on the admin appearance page.
 
 ---
 

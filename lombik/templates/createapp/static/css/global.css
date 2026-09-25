@@ -191,6 +191,66 @@ dropdown small {
 }
 
 /* =========================================================================
+   Markdown (rendered by marked.js in the admin guide)
+   ========================================================================= */
+.markdown {
+  color: var(--ink);
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.markdown h1 { font-size: 1.5rem; margin: 1.5rem 0 0.75rem; }
+.markdown h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
+.markdown h3 { font-size: 1rem; margin: 1.25rem 0 0.5rem; }
+.markdown p { margin: 0.5rem 0; color: var(--ink-muted); }
+.markdown ul,
+.markdown ol { margin: 0.5rem 0 0.75rem; padding-left: 1.25rem; color: var(--ink-muted); }
+.markdown li { margin: 0.25rem 0; }
+.markdown code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  background: var(--line);
+  color: var(--ink);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.375rem;
+}
+.markdown pre {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+.markdown pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+}
+.markdown a { color: var(--brand); text-decoration: none; }
+.markdown a:hover { text-decoration: underline; }
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.8125rem;
+}
+.markdown th,
+.markdown td {
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+}
+.markdown th { color: var(--ink); font-weight: 600; }
+.markdown td { color: var(--ink-muted); }
+
+/* =========================================================================
    Motion helpers
    ========================================================================= */
 @keyframes fadeSlideIn {

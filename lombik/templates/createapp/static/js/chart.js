@@ -286,6 +286,12 @@ const ChartThemes = {
         if (themeAttr.trim().startsWith('{')) {
             try {
             const inline = JSON.parse(themeAttr);
+            if (inline.light && inline.dark) {
+                const inlineIsDark =
+                document.documentElement.classList.contains('dark') ||
+                (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                return { ...baseTheme, ...(inlineIsDark ? inline.dark : inline.light) };
+            }
             return { ...baseTheme, ...inline };
             } catch (_) {
             // fall through to string parsing

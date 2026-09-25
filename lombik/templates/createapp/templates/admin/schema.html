@@ -1,12 +1,32 @@
-<div class="space-y-4">
-    {% for table in tables %}
-    <div class="rounded-xl border border-line bg-surface overflow-hidden">
-        <div class="px-4 py-3 border-b border-line flex items-center justify-between">
-            <span class="font-mono text-sm font-semibold text-ink">{{ table.name }}</span>
-            <span class="text-xs text-ink-muted">{{ table.columns | length }} fields</span>
-        </div>
+{% extends 'base/base.html' %}
 
-        <div class="overflow-x-auto">
+{% block title %}Admin · Schema{% endblock %}
+
+{% block content %}
+<section class="w-full">
+    <div class="flex items-start justify-between">
+        <div>
+            <h2 class="font-light text-ink text-2xl">Admin</h2>
+            <p class="mt-2 text-sm text-ink-muted">Database tables and their fields.</p>
+        </div>
+        <span class="text-xs text-ink-muted">{{ tables | length }} tables</span>
+    </div>
+
+    {% include 'admin/partials/nav.html' %}
+</section>
+
+<section class="w-full space-y-3">
+    {% for table in tables %}
+    <details class="rounded-xl border border-line bg-surface overflow-hidden group" {% if loop.first %}open{% endif %}>
+        <summary class="px-4 py-3 flex items-center justify-between cursor-pointer select-none hover:bg-line/40 transition">
+            <span class="font-mono text-sm font-semibold text-ink">{{ table.name }}</span>
+            <span class="flex items-center gap-2 text-xs text-ink-muted">
+                {{ table.columns | length }} fields
+                <ion-icon name="chevron-down-outline" class="transition group-open:rotate-180"></ion-icon>
+            </span>
+        </summary>
+
+        <div class="border-t border-line overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-xs uppercase tracking-wide text-ink-muted border-b border-line">
@@ -24,13 +44,16 @@
                             {% if col.primary_key %}<span class="text-brand">pk</span>{% endif %}
                             {% if col.primary_key and not col.nullable %} · {% endif %}
                             {% if not col.nullable %}<span>not null</span>{% endif %}
-                            {% if col.foreign_keys %}<span> → {{ col.foreign_keys | map(attribute='target_fullname') | join(', ') }}</span>{% endif %}
+                            {% if col.foreign_keys %}
+                                <span> → {{ col.foreign_keys | map(attribute='target_fullname') | join(', ') }}</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
+    </details>
     {% endfor %}
-</div>
+</section>
+{% endblock %}

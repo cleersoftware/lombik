@@ -7,7 +7,7 @@ from . import core_bp
 def home():
     context = {
         "selected": "home",
-        "version": "4.0.0",
+        "version": "4.1.0",
     }
     return render_template("core/home.html", **context)
 

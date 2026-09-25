@@ -342,7 +342,7 @@ class {to_camel(table_name)}(db.Model):
 
 
 @click.group()
-@click.version_option(version="4.0.0", prog_name="lombik")
+@click.version_option(version="4.1.0", prog_name="lombik")
 def cli():
     pass
 
@@ -368,8 +368,11 @@ def createapp(name):
     print(f"  cd {name}")
     print("  pip install -r requirements.txt")
     print("  lombik initdb")
-    print("  lombik superuser")
     print("  lombik run")
+    print("\nThen open:")
+    print("  http://127.0.0.1:5000")
+    print("\nThe first-run page creates your owner account and unlocks the admin panel.")
+    print("(Prefer the terminal? `lombik superuser` does the same thing.)")
     print("\nThen start building:")
     print("  lombik module team")
     print("  lombik model tenant")

@@ -91,18 +91,13 @@
                                         </button>
 
                                         <dropdown class="absolute right-0 w-44">
-                                            <a href="{{ url_for('core_bp.home') }}"
-                                               class="{% if selected == 'home' %}bg-line{% endif %}">
-                                                <ion-icon name="home-outline" class="mr-2"></ion-icon> Home
-                                            </a>
                                             {% if g.user and g.user.role == 'superuser' %}
                                                 <a href="{{ url_for('admin_bp.index') }}"
                                                    class="{% if selected == 'admin' %}bg-line{% endif %}">
                                                     <ion-icon name="grid-outline" class="mr-2"></ion-icon> Admin
                                                 </a>
+                                                <hr />
                                             {% endif %}
-
-                                            <hr />
 
                                             <button type="button" onclick="toggleDarkMode()" id="changeThemeBtn" class="flex items-center gap-2">
                                                 <ion-icon id="themeIcon" name="moon-outline"></ion-icon>

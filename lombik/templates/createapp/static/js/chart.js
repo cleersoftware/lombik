@@ -485,7 +485,7 @@ const ChartThemes = {
           'stroke-width': theme['bar-border-width'] || '1'
         }));
 
-        if (i % step === 0 || i === n - 1) {
+        if ((n - 1 - i) % step === 0) {
           svg.append(svgEl('text', {
             x: cx,
             y: margin.top + height + 20,
@@ -599,7 +599,7 @@ const ChartThemes = {
         const cy = margin.top + height - (y[i] - domain.min) * yScale;
         points.push({ cx, cy });
 
-        if (i % step === 0 || i === n - 1) {
+        if ((n - 1 - i) % step === 0) {
           svg.append(svgEl('text', {
             x: cx,
             y: margin.top + height + 20,
@@ -735,7 +735,7 @@ const ChartThemes = {
         const cy = margin.top + height - (y[i] - domain.min) * yScale;
         points.push({ cx, cy });
 
-        if (i % step === 0 || i === n - 1) {
+        if ((n - 1 - i) % step === 0) {
           svg.append(svgEl('text', {
             x: cx,
             y: margin.top + height + 20,

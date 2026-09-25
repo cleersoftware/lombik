@@ -1,0 +1,7 @@
+<div class="rounded-xl border border-line bg-surface p-6 sm:p-8">
+    <article id="guide-content" class="markdown"></article>
+</div>
+
+<script>
+    document.getElementById('guide-content').innerHTML = marked.parse({{ guide_html | tojson }});
+</script>

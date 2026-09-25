@@ -1,0 +1,54 @@
+<div class="space-y-8">
+    <!-- Stats -->
+    <section
+        id="admin-stats"
+        hx-get="{{ url_for('admin_bp.stats') }}"
+        hx-trigger="load, every 10s"
+        hx-swap="innerHTML"
+    >
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for _ in range(4) %}
+            <div class="rounded-xl border border-line bg-surface p-5 animate-pulse">
+                <div class="h-6 w-12 rounded bg-line"></div>
+                <div class="h-3 w-20 rounded bg-line mt-2"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Chart -->
+    <section class="rounded-xl border border-line bg-surface p-6">
+        <div
+            id="admin-chart"
+            hx-get="{{ url_for('admin_bp.chart_partial', mode='day') }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        ></div>
+    </section>
+
+    <!-- Errors -->
+    <section>
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <ion-icon name="bug-outline" class="text-danger text-lg"></ion-icon>
+                <h3 class="text-sm font-semibold text-ink">Errors</h3>
+                <span class="text-xs text-ink-muted">newest first</span>
+            </div>
+
+            <form method="POST" action="{{ url_for('admin_bp.clear_errors') }}"
+                  onsubmit="return confirm('Clear the entire error log?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="text-xs text-danger hover:underline">Clear all</button>
+            </form>
+        </div>
+
+        <div
+            id="admin-errors"
+            hx-get="{{ url_for('admin_bp.errors') }}"
+            hx-trigger="load, every 5s"
+            hx-swap="innerHTML"
+        >
+            <p class="text-sm text-ink-muted">Loading errors…</p>
+        </div>
+    </section>
+</div>

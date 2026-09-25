@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from application import STARTED_AT
 from application.configuration import register_config
 from application.themes import register_themes
 from application.commands import register_cli
@@ -17,6 +18,11 @@ from models import register_models
 
 def create_app(env="default"):
     app = Flask(__name__, subdomain_matching=False)
+
+    @app.context_processor
+    def _inject_started_at():
+        return {"app_started_at": STARTED_AT}
+
     register_models()
     register_config(app, env)
     register_cli(app)

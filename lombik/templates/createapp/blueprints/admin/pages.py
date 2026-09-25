@@ -7,6 +7,7 @@ from . import services
 from application import themes
 from application.auth import create_user
 from application.flash import Flash
+from application.responses import htmx_response
 from application.utils import get_countries
 from models import User
 
@@ -14,18 +15,36 @@ GUIDE_PATH = Path(__file__).resolve().parents[2] / "application" / "guide.md"
 
 
 def _superuser_or_redirect():
-    """Return a redirect if the visitor is not a logged-in superuser."""
+    """Return a redirect/HTMX redirect if the visitor is not a superuser."""
     user = getattr(g, "user", None)
 
     if not user:
         Flash.error("Log in to access admin.")
-        return redirect(url_for("auth_bp.login", next=request.path))
+        target = url_for("auth_bp.login", next=request.path)
+        return htmx_response(html="", redirect=target) if request.headers.get("HX-Request") else redirect(target)
 
     if user.role != "superuser":
         Flash.error("Admin is only available to superusers.")
-        return redirect(url_for("core_bp.home"))
+        target = url_for("core_bp.home")
+        return htmx_response(html="", redirect=target) if request.headers.get("HX-Request") else redirect(target)
 
     return None
+
+
+def _shell(active: str):
+    return render_template(
+        "admin/shell.html",
+        selected="admin",
+        active=active,
+        initial_url=url_for(f"admin_bp.page_{active}"),
+    )
+
+
+def _guide_html() -> str:
+    try:
+        return GUIDE_PATH.read_text(encoding="utf-8")
+    except OSError:
+        return "# Guide\n\nGuide content could not be loaded."
 
 
 # --------------------------------------------------------------------------- #
@@ -40,13 +59,7 @@ def index():
     if guard:
         return guard
 
-    return render_template(
-        "admin/errors.html",
-        selected="admin",
-        active="errors",
-        daily=services.error_series_daily(),
-        hourly=services.error_series_hourly(),
-    )
+    return _shell("errors")
 
 
 @admin_bp.post("/setup")
@@ -79,49 +92,74 @@ def complete_setup():
 
 
 # --------------------------------------------------------------------------- #
-# Pages
+# Shell pages (full page on direct visit)
 # --------------------------------------------------------------------------- #
 @admin_bp.get("/schema")
-def schema():
+def schema_page():
     guard = _superuser_or_redirect()
     if guard:
         return guard
-    return render_template("admin/schema.html", selected="admin", active="schema", tables=services.schema_tables())
+    return _shell("schema")
 
 
 @admin_bp.get("/appearance")
-def appearance():
+def appearance_page():
+    guard = _superuser_or_redirect()
+    if guard:
+        return guard
+    return _shell("appearance")
+
+
+@admin_bp.get("/guide")
+def guide_page():
+    guard = _superuser_or_redirect()
+    if guard:
+        return guard
+    return _shell("guide")
+
+
+# --------------------------------------------------------------------------- #
+# HTMX page fragments
+# --------------------------------------------------------------------------- #
+@admin_bp.get("/pages/errors")
+def page_errors():
+    guard = _superuser_or_redirect()
+    if guard:
+        return guard
+    return render_template("admin/pages/errors.html")
+
+
+@admin_bp.get("/pages/schema")
+def page_schema():
+    guard = _superuser_or_redirect()
+    if guard:
+        return guard
+    return render_template("admin/pages/schema.html", tables=services.schema_tables())
+
+
+@admin_bp.get("/pages/appearance")
+def page_appearance():
     guard = _superuser_or_redirect()
     if guard:
         return guard
 
-    active = themes.get_active_theme()
     available = themes.available_themes()
     return render_template(
-        "admin/appearance.html",
-        selected="admin",
-        active="appearance",
+        "admin/pages/appearance.html",
         active_theme=themes.active_theme_id(),
         available_themes=available,
         custom_ids=[t["id"] for t in available if themes.is_custom(t["id"])],
         theme_tokens=themes.TOKENS,
-        active_palette=active,
+        active_palette=themes.get_active_theme(),
     )
 
 
-@admin_bp.get("/guide")
-def guide():
+@admin_bp.get("/pages/guide")
+def page_guide():
     guard = _superuser_or_redirect()
     if guard:
         return guard
-
-    guide_html = ""
-    try:
-        guide_html = GUIDE_PATH.read_text(encoding="utf-8")
-    except OSError:
-        guide_html = "# Guide\n\nGuide content could not be loaded."
-
-    return render_template("admin/guide.html", selected="admin", active="guide", guide_html=guide_html)
+    return render_template("admin/pages/guide.html", guide_html=_guide_html())
 
 
 # --------------------------------------------------------------------------- #
@@ -141,6 +179,24 @@ def errors():
     if guard:
         return guard
     return render_template("admin/partials/errors.html", errors=services.recent_errors())
+
+
+@admin_bp.get("/partials/chart")
+def chart_partial():
+    guard = _superuser_or_redirect()
+    if guard:
+        return guard
+
+    mode = request.args.get("mode", "day")
+    if mode == "hour":
+        data = services.error_series_hourly()
+        caption = "last 24 hours"
+    else:
+        mode = "day"
+        data = services.error_series_daily()
+        caption = "last 14 days"
+
+    return render_template("admin/partials/chart.html", mode=mode, data=data, caption=caption)
 
 
 # --------------------------------------------------------------------------- #

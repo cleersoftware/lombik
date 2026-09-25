@@ -1,6 +1,6 @@
 """Business logic for the {{ module_name }} module.
 
-Keep route handlers in ``routes.py`` thin — do real work here so it can be
+Keep page handlers in ``pages.py`` thin — do real work here so it can be
 reused and tested independently of Flask.
 """
 

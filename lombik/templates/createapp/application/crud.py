@@ -2,7 +2,7 @@
 CRUD generator for the generated app's ``flask crud`` command.
 
 It reads a model file, infers its columns/relationships, and emits a full
-blueprint (routes + services + forms) plus the matching templates.
+blueprint (pages + services + forms) plus the matching templates.
 """
 from __future__ import annotations
 
@@ -321,7 +321,7 @@ __FORM_FIELDS__
     return Form(fields)
 '''
 
-_ROUTES_TEMPLATE = '''from flask import render_template, request, redirect, url_for, abort
+_PAGES_TEMPLATE = '''from flask import render_template, request, redirect, url_for, abort
 
 from . import __BP__
 from .services import (
@@ -691,7 +691,7 @@ def _build_files(info: dict) -> dict:
             __FORM_FIELDS__="\n\n".join(form_fields) if form_fields else "    pass",
             **common,
         ),
-        f"blueprints/{module}/routes.py": _replace_all(_ROUTES_TEMPLATE, **common),
+        f"blueprints/{module}/pages.py": _replace_all(_PAGES_TEMPLATE, **common),
         f"templates/{module}/index.html": _replace_all(_INDEX_TEMPLATE, **common),
         f"templates/{module}/detail.html": _replace_all(_DETAIL_TEMPLATE, **common),
         f"templates/{module}/form.html": _replace_all(_FORM_TEMPLATE, **common),

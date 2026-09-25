@@ -251,6 +251,21 @@ dropdown small {
 .markdown td { color: var(--ink-muted); }
 
 /* =========================================================================
+   Admin nav animated highlighter
+   ========================================================================= */
+.admin-nav-highlight {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  border-radius: 0.6rem;
+  background: var(--raised);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              width 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================================
    Motion helpers
    ========================================================================= */
 @keyframes fadeSlideIn {

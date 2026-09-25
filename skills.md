@@ -111,7 +111,7 @@ split-card layout (`templates/auth/base.html`).
 
 - **Hypermedia first.** A page is HTML. Interaction is a request that returns a
   fragment. Prefer `hx-get`/`hx-post` + `hx-target` over writing JS.
-- **Routes + services.** Keep `routes.py` thin (HTTP in/out); put business logic
+- **Pages + services.** Keep `pages.py` thin (HTTP in/out); put business logic
   in `application/<domain>.py` or a blueprint's `services.py`. Add `forms.py`
   only when a module needs forms.
 - **Command line over GUI.** Generate structure with the CLI, then edit files.

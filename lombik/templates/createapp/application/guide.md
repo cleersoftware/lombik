@@ -25,7 +25,7 @@ Inside a blueprint:
 | File | Purpose |
 |---|---|
 | `__init__.py` | The Blueprint object |
-| `routes.py` | HTTP handlers — pages and mutations, kept thin |
+| `pages.py` | HTTP handlers — pages and mutations, kept thin |
 | `services.py` | Business logic (reusable, testable) |
 | `forms.py` | Optional form definitions |
 
@@ -34,7 +34,7 @@ Shared app-wide helpers live in `application/` (`auth.py`, `users.py`,
 
 ## The mental model
 
-- **Routes handle HTTP.** Parse the request, call a service, return a response.
+- **Pages handle HTTP.** Parse the request, call a service, return a response.
 - **Services do the work.** Query the database, validate, mutate, return a
   `Result`.
 - **Forms describe input.** Use `InputField`, `SelectField`, `CheckboxField`
@@ -61,11 +61,11 @@ lombik relate tenant.id to user.tenant_id one-to-many
 lombik module billing
 ```
 
-Now edit the generated `routes.py` and `services.py` to match your product.
+Now edit the generated `pages.py` and `services.py` to match your product.
 
 ## Adding a page
 
-1. Add a handler in `blueprints/<module>/routes.py`.
+1. Add a handler in `blueprints/<module>/pages.py`.
 2. Return `render_template("<module>/page.html")`.
 3. Create the template and `{% extends 'base/base.html' %}`.
 

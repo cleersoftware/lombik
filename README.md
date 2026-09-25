@@ -94,26 +94,26 @@ reads `from application...` and never collides with the `lombik` CLI package.
 
 ---
 
-## Routes and services
+## Pages and services
 
-Each blueprint keeps two concerns: **routes** handle HTTP, **services** do the
+Each blueprint keeps two concerns: **pages** handle HTTP, **services** do the
 real work. Add a `forms.py` only when a module needs forms.
 
 ```text
 blueprints/
   auth/
     __init__.py   # the Blueprint object
-    routes.py     # page handlers + mutations
+    pages.py      # page handlers + mutations
     forms.py      # login/register form definitions
   core/
     __init__.py
-    routes.py
+    pages.py
 ```
 
-Route handlers stay thin:
+Page handlers stay thin:
 
 ```python
-# blueprints/core/routes.py
+# blueprints/core/pages.py
 from application.wrappers import login_required, roles_required
 
 @core_bp.route("/members")
@@ -269,7 +269,7 @@ security helpers, responses, and the built-in validators.
 ## Philosophy
 
 - Keep logic close to the UI with server-rendered HTML and HTMX.
-- Keep `routes.py` thin and put real work in services.
+- Keep `pages.py` thin and put real work in services.
 - Generate boilerplate from the command line, then edit real files.
 - Keep the graphical surface minimal: a single owner admin panel.
 - Ship sensible, secure defaults: hashed passwords, CSRF, sessions, rate

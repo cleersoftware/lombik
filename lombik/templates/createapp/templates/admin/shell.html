@@ -1,0 +1,109 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block extend_header %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="w-full space-y-8">
+    <header class="flex items-start justify-between gap-6">
+        <div>
+            <h2 class="text-3xl font-light text-ink tracking-tight">Admin</h2>
+            <p class="mt-2 text-sm text-ink-muted">Owner-only overview, error log, schema and themes.</p>
+        </div>
+
+        <span
+            class="inline-flex items-center gap-1.5 text-[11px] font-mono text-ink-muted whitespace-nowrap"
+            title="App started {{ app_started_at | localtime }}"
+        >
+            <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+            live · up {{ app_started_at | timesince }}
+        </span>
+    </header>
+
+    <nav
+        id="admin-nav"
+        class="relative flex items-center gap-1 p-1 rounded-xl border border-line bg-surface overflow-x-auto no-scrollbar"
+    >
+        <div id="admin-nav-highlight" class="admin-nav-highlight"></div>
+
+        <button type="button" data-admin-nav data-page="errors"
+            hx-get="{{ url_for('admin_bp.page_errors') }}"
+            hx-target="#admin-main" hx-swap="innerHTML"
+            hx-push-url="{{ url_for('admin_bp.index') }}"
+            onclick="setActiveNav(this)"
+            class="relative z-10 whitespace-nowrap px-4 py-2 text-sm rounded-lg text-ink-muted transition-colors">
+            <ion-icon name="bug-outline" class="mr-1.5"></ion-icon>Errors
+        </button>
+
+        <button type="button" data-admin-nav data-page="schema"
+            hx-get="{{ url_for('admin_bp.page_schema') }}"
+            hx-target="#admin-main" hx-swap="innerHTML"
+            hx-push-url="{{ url_for('admin_bp.schema_page') }}"
+            onclick="setActiveNav(this)"
+            class="relative z-10 whitespace-nowrap px-4 py-2 text-sm rounded-lg text-ink-muted transition-colors">
+            <ion-icon name="layers-outline" class="mr-1.5"></ion-icon>Schema
+        </button>
+
+        <button type="button" data-admin-nav data-page="appearance"
+            hx-get="{{ url_for('admin_bp.page_appearance') }}"
+            hx-target="#admin-main" hx-swap="innerHTML"
+            hx-push-url="{{ url_for('admin_bp.appearance_page') }}"
+            onclick="setActiveNav(this)"
+            class="relative z-10 whitespace-nowrap px-4 py-2 text-sm rounded-lg text-ink-muted transition-colors">
+            <ion-icon name="color-palette-outline" class="mr-1.5"></ion-icon>Appearance
+        </button>
+
+        <button type="button" data-admin-nav data-page="guide"
+            hx-get="{{ url_for('admin_bp.page_guide') }}"
+            hx-target="#admin-main" hx-swap="innerHTML"
+            hx-push-url="{{ url_for('admin_bp.guide_page') }}"
+            onclick="setActiveNav(this)"
+            class="relative z-10 whitespace-nowrap px-4 py-2 text-sm rounded-lg text-ink-muted transition-colors">
+            <ion-icon name="book-outline" class="mr-1.5"></ion-icon>Guide
+        </button>
+    </nav>
+
+    <div id="admin-main" hx-get="{{ initial_url }}" hx-trigger="load" hx-swap="innerHTML">
+        <div class="rounded-xl border border-line bg-surface p-10 text-sm text-ink-muted animate-pulse">Loading…</div>
+    </div>
+</section>
+
+<script>
+    function setActiveNav(btn) {
+        var nav = document.getElementById('admin-nav');
+        var highlight = document.getElementById('admin-nav-highlight');
+        if (!nav || !highlight || !btn) return;
+
+        document.querySelectorAll('[data-admin-nav]').forEach(function (b) {
+            b.classList.remove('text-ink', 'font-medium');
+            b.classList.add('text-ink-muted');
+        });
+        btn.classList.add('text-ink', 'font-medium');
+        btn.classList.remove('text-ink-muted');
+
+        var navRect = nav.getBoundingClientRect();
+        var btnRect = btn.getBoundingClientRect();
+        highlight.style.width = btnRect.width + 'px';
+        highlight.style.transform = 'translateX(' + (btnRect.left - navRect.left) + 'px)';
+    }
+
+    function pageFromPath(path) {
+        var seg = path.split('/').filter(Boolean).pop();
+        if (!seg || seg === 'admin') return 'errors';
+        return seg;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.querySelector('[data-page="' + pageFromPath(location.pathname) + '"]');
+        if (btn) setActiveNav(btn);
+    });
+
+    window.addEventListener('popstate', function () {
+        var btn = document.querySelector('[data-page="' + pageFromPath(location.pathname) + '"]');
+        if (btn) setActiveNav(btn);
+    });
+</script>
+{% endblock %}

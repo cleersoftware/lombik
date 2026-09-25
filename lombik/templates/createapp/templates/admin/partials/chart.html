@@ -1,0 +1,28 @@
+<div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+        <ion-icon name="{{ 'bar-chart-outline' if mode == 'day' else 'pulse-outline' }}" class="text-brand text-lg"></ion-icon>
+        <h3 class="text-sm font-semibold text-ink">{{ 'Errors by day' if mode == 'day' else 'Errors by hour' }}</h3>
+        <span class="text-xs text-ink-muted">{{ caption }}</span>
+    </div>
+
+    <div class="inline-flex rounded-lg border border-line bg-raised p-1">
+        <button type="button"
+            hx-get="{{ url_for('admin_bp.chart_partial', mode='day') }}"
+            hx-target="#admin-chart" hx-swap="innerHTML"
+            class="px-3 py-1 rounded-md text-xs transition-colors {% if mode == 'day' %}bg-line text-ink font-medium{% else %}text-ink-muted hover:text-ink{% endif %}">
+            Day
+        </button>
+        <button type="button"
+            hx-get="{{ url_for('admin_bp.chart_partial', mode='hour') }}"
+            hx-target="#admin-chart" hx-swap="innerHTML"
+            class="px-3 py-1 rounded-md text-xs transition-colors {% if mode == 'hour' %}bg-line text-ink font-medium{% else %}text-ink-muted hover:text-ink{% endif %}">
+            Hour
+        </button>
+    </div>
+</div>
+
+{% if mode == 'day' %}
+<bar-chart data='{{ data | tojson }}' theme='{{ chart_theme_json() }}' x-title="Day" y-title="Errors"></bar-chart>
+{% else %}
+<area-chart data='{{ data | tojson }}' theme='{{ chart_theme_json() }}' x-title="Hour" y-title="Errors"></area-chart>
+{% endif %}

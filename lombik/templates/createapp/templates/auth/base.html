@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth text-ink bg-canvas dark:text-ink dark:bg-canvas">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F8F6F2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#262833" media="(prefers-color-scheme: dark)" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <script>
+        const savedTheme = localStorage.getItem("theme");
+        if (
+            savedTheme === "dark" ||
+            (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+            document.documentElement.classList.add("dark");
+        }
+    </script>
+
+    <title>{% block title %}{% endblock %} • lombik</title>
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='icons/favicon_lombik.ico') }}" type="image/x-icon" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}" />
+    <style>{{ theme_css() | safe }}</style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Literata:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Petit+Formal+Script:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: "var(--canvas)",
+                        surface: "var(--surface)",
+                        raised: "var(--raised)",
+                        line: "var(--line)",
+                        "line-strong": "var(--line-strong)",
+                        ink: "var(--ink)",
+                        "ink-muted": "var(--ink-muted)",
+                        brand: "var(--brand)",
+                        "brand-ink": "var(--brand-ink)",
+                        success: "var(--success)",
+                        warning: "var(--warning)",
+                        danger: "var(--danger)",
+                    },
+                    fontFamily: {
+                        sans: ["Outfit", "sans-serif"],
+                        serif: ["Literata", "serif"],
+                        handwriting: ["Caveat", "cursive"],
+                        mono: ["JetBrains Mono", "monospace"],
+                        formal: ["Petit Formal Script", "cursive"],
+                    },
+                },
+            },
+        };
+    </script>
+
+    {% block extend_header %}{% endblock %}
+</head>
+
+<body class="min-h-screen w-full flex text-ink bg-canvas dark:text-ink dark:bg-canvas selection:bg-brand/20 selection:text-brand">
+    {% block content %}{% endblock %}
+
+    <script>
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('ion-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('name', 'eye-outline');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('name', 'eye-off-outline');
+            }
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/flash.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/csrf.js') }}" defer></script>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% include 'base/partials/flash.html' %}
+    {% endwith %}
+</body>
+</html>

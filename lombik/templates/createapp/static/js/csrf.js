@@ -1,4 +1,4 @@
 document.body.addEventListener('htmx:configRequest', function (event) {
-    event.detail.headers['X-CSRFToken'] =
-        document.querySelector('meta[name="csrf-token"]').content;
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) event.detail.headers['X-CSRFToken'] = meta.content;
 });

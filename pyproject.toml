@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lombik"
-version = "3.2.5"
+version = "4.0.0"
 description = "Flask scaffold engine"
 authors = [
     { name="David Plajner" }
@@ -23,10 +23,12 @@ dependencies = [
     "click",
     "SQLAlchemy",
     "Werkzeug",
+    "psycopg2-binary",
     "pytest",
     "pytest-cov",
     "resend",
-    "python-dateutil"
+    "python-dateutil",
+    "gunicorn"
 ]
 
 [project.scripts]

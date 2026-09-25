@@ -1,24 +1,57 @@
-.flash {
-  transform: translateY(150%);
-  animation: slideUp 1s ease-out forwards, slideDown 1s ease-in forwards;
-  animation-delay: 0s, 7.1s;
+/* =========================================================================
+   Design tokens
+   -------------------------------------------------------------------------
+   Colors are consumed by Tailwind (see tailwind.config in base.html) through
+   these CSS variables, so switching themes is a one-liner: add/remove .dark.
+   ========================================================================= */
+:root {
+  --canvas: #F8F6F2;       /* page background */
+  --surface: #FCFBF9;      /* panel / card background */
+  --raised: #FFFFFF;       /* inputs, hover rows, elevated surfaces */
+  --line: #E8E5E0;         /* hairline borders */
+  --line-strong: #D9D4CC;  /* emphasised borders */
+  --ink: #2E2C2A;          /* primary text */
+  --ink-muted: #7C7873;    /* secondary text */
+  --brand: #FF6B5A;        /* accent / primary action */
+  --brand-ink: #FFFFFF;    /* text on top of brand */
+  --success: #768E64;
+  --warning: #D1A054;
+  --danger: #C6685B;
 }
 
-@keyframes slideUp {
-  to {
-    transform: translateY(0);
-  }
+.dark {
+  --canvas: #262833;
+  --surface: #2F3140;
+  --raised: #2A2C38;
+  --line: #404358;
+  --line-strong: #4D5064;
+  --ink: #E9EAF0;
+  --ink-muted: #9598AD;
+  --brand: #FF6B5A;
+  --brand-ink: #262833;
+  --success: #6F9B7A;
+  --warning: #D0A15C;
+  --danger: #C97972;
 }
 
-@keyframes slideDown {
-  to {
-    transform: translateY(150%);
-  }
+/* =========================================================================
+   Base
+   ========================================================================= */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: "Outfit", sans-serif;
 }
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  outline: none;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -27,83 +60,141 @@ body {
   scrollbar-width: none;
 }
 
-html {
-  scroll-behavior: smooth;
+.bookfont   { font-family: "Literata", serif; }
+.funfont    { font-family: "Caveat", cursive; }
+.codefont   { font-family: "JetBrains Mono", monospace; }
+.cursivefont{ font-family: "Petit Formal Script", cursive; }
+
+/* =========================================================================
+   Flash / toasts
+   ========================================================================= */
+.flash {
+  transform: translateY(150%);
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+             slideDown 0.5s ease-in forwards;
+  animation-delay: 0s, 8.5s;
 }
 
-
-input:focus,
-textarea:focus,
-select:focus,
-button:focus {
-  outline: none;
-
+@keyframes slideUp {
+  to { transform: translateY(0); }
+}
+@keyframes slideDown {
+  to { transform: translateY(150%); }
 }
 
-.bookfont {
-  font-family: "Literata", serif;
-}
-
-.funfont {
-  font-family: "Caveat", sans-serif;
-}
-
-.codefont {
-  font-family: "JetBrains Mono", sans-serif;
-}
-
-.cursivefont {
-  font-family: "Petit Formal Script", sans-serif;
-}
-
-
-dragarea,
+/* =========================================================================
+   Drag engine
+   ========================================================================= */
 .dragarea {
-  display: block;
-  box-sizing: border-box;
+  position: relative;
 }
 
-dragfree,
-.dragfree,
-.dragfree-save {
-  display: block;
-}
-
-.dragable,
-.draggable,
-dragfree,
-.dragfree,
-.dragfree-save {
+.dragable {
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
   cursor: grab;
 }
 
+.dragable.dragging {
+  cursor: grabbing;
+  opacity: 0.95;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.22), 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.dragable.drag-disabled,
+.dragable[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .drag-placeholder {
   box-sizing: border-box;
+  border-radius: 10px;
+  background: rgba(255, 107, 90, 0.08);
+  border: 2px dashed rgba(255, 107, 90, 0.45);
 }
 
 body.dragengine-active {
   cursor: grabbing;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-.dragging {
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3),
-            0 8px 10px -6px rgb(0 0 0 / 0.3);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* =========================================================================
+   Dropdown engine
+   ========================================================================= */
+dropdown {
+  display: none;
+  position: fixed;
+  z-index: 9999 !important;
+  min-width: 12rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  padding: 0.25rem 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.95);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+  pointer-events: none;
 }
 
-@keyframes pulse {
-  50% {
-    opacity: 0.7;
-  }
+dropdown.dropdown-open {
+  display: block !important;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
-.drag-placeholder {
-  border-radius:0.5rem;
-  border: 1px;
-  border-style: dashed;
-  border-color: #FF6B5A;
-  opacity: 70%;
+dropdown a,
+dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--ink);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 100ms;
+  white-space: nowrap;
 }
+
+dropdown a:hover,
+dropdown button:hover {
+  background-color: var(--line);
+}
+
+dropdown hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0.25rem 0;
+}
+
+dropdown > div {
+  padding: 0.5rem 1rem;
+}
+
+dropdown .text-muted,
+dropdown small {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding: 0.25rem 1rem;
+  display: block;
+}
+
+/* =========================================================================
+   Motion helpers
+   ========================================================================= */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-in { animation: fadeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }

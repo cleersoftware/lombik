@@ -3,16 +3,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import lombik.dev  # noqa: F401  (watched by the reloader for Studio restarts)
-
-from lombik.configuration import register_config
-from lombik.commands import register_cli
-from lombik.filters import register_filters
-from lombik.extensions import register_extensions
-from lombik.modules import register_blueprints
-from lombik.hooks import register_hooks
-from lombik.meta import register_metadata
-from lombik.errors import register_error_handlers
+from application.configuration import register_config
+from application.themes import register_themes
+from application.commands import register_cli
+from application.filters import register_filters
+from application.extensions import register_extensions
+from application.modules import register_blueprints
+from application.hooks import register_hooks
+from application.meta import register_metadata
+from application.errors import register_error_handlers
 from models import register_models
 
 
@@ -21,6 +20,7 @@ def create_app(env="default"):
     register_models()
     register_config(app, env)
     register_cli(app)
+    register_themes(app)
     register_blueprints(app)
     register_extensions(app)
     register_hooks(app)

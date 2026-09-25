@@ -1,29 +1,30 @@
-function openModal(modalId, data = {}) {
-    const modal = document.getElementById(modalId);
+function openModal(modalId, data) {
+    data = data || {};
+    var modal = document.getElementById(modalId);
+    if (!modal) return;
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-
     modal.addEventListener('click', closeOnBackdrop);
 
-    Object.entries(data).forEach(([key, val]) => {
+    Object.entries(data).forEach(function (pair) {
+        var key = pair[0];
+        var value = pair[1];
 
-        // fill inputs
-        const input = modal.querySelector(`[name="${key}"]`);
-        if (input) input.value = val;
+        var input = modal.querySelector('[name="' + key + '"]');
+        if (input) input.value = value;
 
-        // fill display fields
-        const display = modal.querySelector(`[data-field="${key}"]`);
-        if (display) display.textContent = val;
+        var display = modal.querySelector('[data-field="' + key + '"]');
+        if (display) display.textContent = value;
     });
 }
 
 function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
+    var modal = document.getElementById(modalId);
+    if (!modal) return;
 
     modal.classList.add('hidden');
     modal.classList.remove('flex');
-
     modal.removeEventListener('click', closeOnBackdrop);
 }
 

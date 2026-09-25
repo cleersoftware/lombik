@@ -1,5 +1,14 @@
 /*!
- * DropdownEngine v1.0.4 (Strictly Default + Edge Avoidance)
+ * DropdownEngine
+ * Small dependency-free engine for the custom <dropdown> element.
+ *
+ * Usage:
+ *   <div class="relative">
+ *     <button type="button">Menu</button>
+ *     <dropdown class="absolute right-0">
+ *       <a href="/x">Item</a>
+ *     </dropdown>
+ *   </div>
  */
 (function (global) {
   'use strict';
@@ -12,9 +21,7 @@
     while (el) {
       var children = el.children;
       for (var i = 0; i < children.length; i++) {
-        if (children[i].tagName.toLowerCase() === 'dropdown') {
-          return el;
-        }
+        if (children[i].tagName.toLowerCase() === 'dropdown') return el;
       }
       el = el.parentElement;
     }
@@ -25,56 +32,32 @@
     if (!trigger) return null;
     var children = trigger.children;
     for (var i = 0; i < children.length; i++) {
-      if (children[i].tagName.toLowerCase() === 'dropdown') {
-        return children[i];
-      }
+      if (children[i].tagName.toLowerCase() === 'dropdown') return children[i];
     }
     return null;
   }
 
-  function smartPosition(dd, trigger) {
-      // Temporarily display as hidden to calculate real dimensions
-      dd.style.visibility = 'hidden';
-      dd.style.display = 'block';
-      
-      // 1. Force your requested default: 
-      // Inline with button start (left: 0), 4px below bottom edge.
-      dd.style.top = 'calc(100% + 4px)';
-      dd.style.bottom = 'auto';
-      dd.style.left = '0';
-      dd.style.right = 'auto';
-      
-      // Clear any Tailwind margins (like mt-2) so our 4px math is exact
-      dd.style.margin = '0'; 
+  function smartPosition(dd) {
+    dd.style.visibility = 'hidden';
+    dd.style.display = 'block';
 
-      // 2. Measure the dropdown in its default state
-      var rect = dd.getBoundingClientRect();
-      var viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-      var viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    dd.style.top = 'calc(100% + 4px)';
+    dd.style.bottom = 'auto';
+    dd.style.left = '0';
+    dd.style.right = 'auto';
+    dd.style.margin = '0';
 
-      // 3. Edge Check: Right side of the screen
-      if (rect.right > viewportWidth) {
-          // It bleeds off the right edge. Snap to the right edge of the button.
-          dd.style.left = 'auto';
-          dd.style.right = '0';
-      }
+    var rect = dd.getBoundingClientRect();
+    var vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
-      // 4. Edge Check: Bottom of the screen (dvh)
-      if (rect.bottom > viewportHeight) {
-          // It bleeds off the bottom. Flip it ABOVE the button (with 4px gap).
-          dd.style.top = 'auto';
-          dd.style.bottom = 'calc(100% + 4px)';
-      }
+    if (rect.right > vw) { dd.style.left = 'auto'; dd.style.right = '0'; }
+    if (rect.bottom > vh) { dd.style.top = 'auto'; dd.style.bottom = 'calc(100% + 4px)'; }
 
-      // 5. Edge Check: Left side (Only happens on tiny mobile screens if right-snap pushed it too far)
-      rect = dd.getBoundingClientRect(); // Recalculate just in case
-      if (rect.left < 0) {
-          dd.style.left = '0';
-          dd.style.right = 'auto';
-      }
+    rect = dd.getBoundingClientRect();
+    if (rect.left < 0) { dd.style.left = '0'; dd.style.right = 'auto'; }
 
-      // Make visible now that it's in the optimal safe spot
-      dd.style.visibility = 'visible';
+    dd.style.visibility = 'visible';
   }
 
   function open(trigger) {
@@ -83,8 +66,7 @@
     closeAll();
     trigger.classList.add(ACTIVE_CLASS);
     dd.classList.add(OPEN_CLASS);
-    
-    smartPosition(dd, trigger);
+    smartPosition(dd);
   }
 
   function close(trigger) {
@@ -92,15 +74,13 @@
     if (!dd) return;
     trigger.classList.remove(ACTIVE_CLASS);
     dd.classList.remove(OPEN_CLASS);
-    dd.style.display = 'none'; 
+    dd.style.display = 'none';
   }
 
   function closeAll(exceptTrigger) {
-    var activeTriggers = document.querySelectorAll('.' + ACTIVE_CLASS);
-    for (var i = 0; i < activeTriggers.length; i++) {
-      if (activeTriggers[i] !== exceptTrigger) {
-        close(activeTriggers[i]);
-      }
+    var active = document.querySelectorAll('.' + ACTIVE_CLASS);
+    for (var i = 0; i < active.length; i++) {
+      if (active[i] !== exceptTrigger) close(active[i]);
     }
   }
 
@@ -110,39 +90,27 @@
 
   function onClick(e) {
     var trigger = getTrigger(e.target);
-    if (!trigger) {
-      closeAll();
+    if (!trigger) { closeAll(); return; }
+
+    if (e.target.closest('dropdown')) {
+      if (isOpen(trigger)) setTimeout(function () { close(trigger); }, 0);
       return;
     }
 
-    var clickedInDropdown = !!e.target.closest('dropdown');
-
-    if (clickedInDropdown) {
-      if (isOpen(trigger)) {
-        setTimeout(function () { close(trigger); }, 0);
-      }
-      return; 
-    }
-
-    if (isOpen(trigger)) {
-      close(trigger);
-    } else {
-      open(trigger);
-    }
-    e.stopPropagation(); 
+    if (isOpen(trigger)) close(trigger);
+    else open(trigger);
+    e.stopPropagation();
   }
 
   function onKeyDown(e) {
-    if (e.key === 'Escape') {
-      closeAll();
-    }
+    if (e.key === 'Escape') closeAll();
   }
 
   function onResize() {
-    var activeTriggers = document.querySelectorAll('.' + ACTIVE_CLASS);
-    for (var i = 0; i < activeTriggers.length; i++) {
-      var dd = getDropdown(activeTriggers[i]);
-      if (dd) smartPosition(dd, activeTriggers[i]);
+    var active = document.querySelectorAll('.' + ACTIVE_CLASS);
+    for (var i = 0; i < active.length; i++) {
+      var dd = getDropdown(active[i]);
+      if (dd) smartPosition(dd);
     }
   }
 
@@ -153,21 +121,13 @@
     root.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown);
     window.addEventListener('resize', onResize);
-    
-    var dropdowns = document.querySelectorAll('dropdown');
-    dropdowns.forEach(function(dd) {
-      if (!dd.classList.contains(OPEN_CLASS)) {
-         dd.style.display = 'none';
-      }
+
+    document.querySelectorAll('dropdown').forEach(function (dd) {
+      if (!dd.classList.contains(OPEN_CLASS)) dd.style.display = 'none';
     });
   }
 
-  global.DropdownEngine = {
-    init: init,
-    open: open,
-    close: close,
-    closeAll: closeAll,
-  };
+  global.DropdownEngine = { init: init, open: open, close: close, closeAll: closeAll };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { init(document); });
@@ -176,6 +136,7 @@
   }
 })(window);
 
-document.body.addEventListener("htmx:afterSwap", function (e) {
+/* Re-init dropdowns inside swapped-in HTMX fragments. */
+document.body.addEventListener('htmx:afterSwap', function (e) {
   DropdownEngine.init(e.target);
 });

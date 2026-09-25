@@ -1,76 +1,158 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth text-ink bg-canvas dark:text-ink dark:bg-canvas">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#FFFFFF">
-    <meta name="description" content="cleersoftware.com"/>
-    <meta name="keywords" content="starterapp"/>
-    <meta name="author" content="David Plajner - cleer."/>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F8F6F2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#262833" media="(prefers-color-scheme: dark)" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script>
         const savedTheme = localStorage.getItem("theme");
-      
         if (
-          savedTheme === "dark" ||
-          (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+            savedTheme === "dark" ||
+            (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
         ) {
-          document.documentElement.classList.add("dark");
+            document.documentElement.classList.add("dark");
         }
-      </script>
+    </script>
 
-    <title>{% block title %}{% endblock %} · lombik by cleer.</title>
+    <title>{% block title %}{% endblock %} • lombik</title>
 
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="{{ url_for('static', filename='icons/favicon_lombik.ico') }}" type="image/x-icon">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-  
-    
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Literata:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='icons/favicon_lombik.ico') }}" type="image/x-icon" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}" />
+    <style>{{ theme_css() | safe }}</style>
 
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Literata:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Petit+Formal+Script:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#FF6B5A",
-            }
-          }
-        }
-      }
-    </script>
-    {% block extend_header %}
-    {% endblock %}
 
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: "var(--canvas)",
+                        surface: "var(--surface)",
+                        raised: "var(--raised)",
+                        line: "var(--line)",
+                        "line-strong": "var(--line-strong)",
+                        ink: "var(--ink)",
+                        "ink-muted": "var(--ink-muted)",
+                        brand: "var(--brand)",
+                        "brand-ink": "var(--brand-ink)",
+                        success: "var(--success)",
+                        warning: "var(--warning)",
+                        danger: "var(--danger)",
+                    },
+                    fontFamily: {
+                        sans: ["Outfit", "sans-serif"],
+                        serif: ["Literata", "serif"],
+                        handwriting: ["Caveat", "cursive"],
+                        mono: ["JetBrains Mono", "monospace"],
+                        formal: ["Petit Formal Script", "cursive"],
+                    },
+                },
+            },
+        };
+    </script>
+
+    {% block extend_header %}{% endblock %}
 </head>
-  <body class="min-h-screen w-full flex bg-white dark:bg-neutral-800 dark:text-gray-100">
-    <main class="flex-1 flex items-center justify-center">
-        {% block content %}{% endblock %}
+
+<body class="min-h-screen w-full flex bg-canvas dark:bg-canvas selection:bg-brand/20 selection:text-brand">
+    <main class="min-h-[100dvh] text-ink bg-canvas w-full flex justify-center p-0 sm:p-8">
+        <section class="w-full max-w-3xl">
+            <main class="min-w-0 w-full">
+                <div class="relative rounded-none sm:rounded-xl border border-line bg-surface shadow-sm">
+                    <header class="sticky top-0 z-10 border-b border-line bg-surface/90 backdrop-blur-lg h-14 sm:rounded-t-xl">
+                        <div class="w-full h-full flex items-center justify-between gap-8 px-6">
+                            <a href="{{ url_for('core_bp.home') }}" class="flex items-center gap-1 text-lg font-semibold tracking-tight text-ink">
+                                lombik<span class="text-brand">.</span>
+                            </a>
+
+                            <div class="flex items-center gap-3">
+                                {% if g.user %}
+                                    <div class="relative">
+                                        <button
+                                            type="button"
+                                            class="flex items-center justify-center p-2 rounded-full bg-raised border border-line text-ink-muted hover:text-ink transition-colors"
+                                            aria-label="Open menu"
+                                        >
+                                            <ion-icon name="settings-outline" class="text-sm"></ion-icon>
+                                        </button>
+
+                                        <dropdown class="absolute right-0 w-44">
+                                            <a href="{{ url_for('core_bp.home') }}"
+                                               class="{% if selected == 'home' %}bg-line{% endif %}">
+                                                <ion-icon name="home-outline" class="mr-2"></ion-icon> Home
+                                            </a>
+                                            {% if g.user and g.user.role == 'superuser' %}
+                                                <a href="{{ url_for('admin_bp.index') }}"
+                                                   class="{% if selected == 'admin' %}bg-line{% endif %}">
+                                                    <ion-icon name="grid-outline" class="mr-2"></ion-icon> Admin
+                                                </a>
+                                            {% endif %}
+
+                                            <hr />
+
+                                            <button type="button" onclick="toggleDarkMode()" id="changeThemeBtn" class="flex items-center gap-2">
+                                                <ion-icon id="themeIcon" name="moon-outline"></ion-icon>
+                                                <span id="themeText">Dark mode</span>
+                                            </button>
+
+                                            <hr />
+
+                                            <button
+                                                type="button"
+                                                hx-post="{{ url_for('auth_bp.logout') }}"
+                                                hx-vals='{ "csrf_token": "{{ csrf_token() }}" }'
+                                                class="text-danger"
+                                            >
+                                                <ion-icon name="log-out-outline" class="mr-2"></ion-icon> Log out
+                                            </button>
+                                        </dropdown>
+                                    </div>
+                                {% else %}
+                                    <a href="{{ url_for('auth_bp.login') }}"
+                                       class="text-sm text-ink-muted hover:text-ink transition-colors font-medium">
+                                        Log in
+                                    </a>
+                                    <a href="{{ url_for('auth_bp.register') }}"
+                                       class="text-sm px-4 py-1.5 rounded-lg bg-ink text-canvas font-medium hover:opacity-90 transition">
+                                        Get started
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </header>
+
+                    <div class="w-full space-y-10 p-6 sm:p-10">
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+            </main>
+        </section>
     </main>
-  </body>
-    
+
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/drag.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/dropdown.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/flash.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/chart.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/modal.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/csrf.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/chart.js') }}" defer></script>
 
-    
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% include 'base/partials/flash.html' %}
+        {% include 'base/partials/flash.html' %}
     {% endwith %}
+</body>
 </html>

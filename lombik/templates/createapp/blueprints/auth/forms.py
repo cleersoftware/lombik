@@ -1,11 +1,11 @@
-from lombik.forms import (
+from application.forms import (
     Form,
     InputField,
     SelectField,
     CheckboxField,
 )
 
-from lombik.utils import get_countries
+from application.utils import get_countries
 
 class LoginForm(Form):
     def __init__(self):

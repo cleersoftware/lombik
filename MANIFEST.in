@@ -1,2 +1,8 @@
 include lombik/templates/createapp/.env
 include lombik/templates/createapp/.gitignore
+include lombik/templates/createapp/.dockerignore
+include lombik/templates/createapp/Dockerfile
+include lombik/templates/createapp/docker-compose.yml
+include lombik/templates/createapp/Procfile
+include lombik/templates/createapp/railway.json
+include lombik/templates/createapp/requirements.txt

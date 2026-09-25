@@ -1,0 +1,113 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block content %}
+<section class="w-full flex items-start justify-between">
+    <div>
+        <h2 class="font-light text-ink text-2xl">Admin</h2>
+        <p class="mt-2 text-sm text-ink-muted">Owner-only overview, error log and schema.</p>
+    </div>
+    <span class="inline-flex items-center gap-1.5 text-[11px] font-mono text-success">
+        <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span> live
+    </span>
+</section>
+
+<!-- Stats -->
+<section
+    id="admin-stats"
+    hx-get="{{ url_for('admin_bp.stats') }}"
+    hx-trigger="load, every 10s"
+    hx-swap="innerHTML"
+    class="w-full"
+>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for _ in range(4) %}
+        <div class="rounded-xl border border-line bg-surface p-5 animate-pulse">
+            <div class="h-6 w-12 rounded bg-line"></div>
+            <div class="h-3 w-20 rounded bg-line mt-2"></div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Errors -->
+<section class="w-full">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+            <ion-icon name="bug-outline" class="text-danger text-lg"></ion-icon>
+            <h3 class="text-sm font-semibold text-ink">Errors</h3>
+            <span class="text-xs text-ink-muted">newest first</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_bp.clear_errors') }}"
+              onsubmit="return confirm('Clear the entire error log?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="text-xs text-danger hover:underline">Clear all</button>
+        </form>
+    </div>
+
+    <div
+        id="admin-errors"
+        hx-get="{{ url_for('admin_bp.errors') }}"
+        hx-trigger="load, every 5s"
+        hx-swap="innerHTML"
+        class="w-full"
+    >
+        <p class="text-sm text-ink-muted">Loading errors…</p>
+    </div>
+</section>
+
+<!-- Schema -->
+<section class="w-full">
+    <div class="flex items-center gap-2 mb-4">
+        <ion-icon name="layers-outline" class="text-brand text-lg"></ion-icon>
+        <h3 class="text-sm font-semibold text-ink">Schema</h3>
+    </div>
+
+    <div
+        id="admin-schema"
+        hx-get="{{ url_for('admin_bp.schema') }}"
+        hx-trigger="load"
+        hx-swap="innerHTML"
+        class="w-full"
+    >
+        <p class="text-sm text-ink-muted">Loading schema…</p>
+    </div>
+</section>
+
+<!-- Appearance -->
+<section class="w-full space-y-4">
+    <div class="flex items-center gap-2">
+        <ion-icon name="color-palette-outline" class="text-brand text-lg"></ion-icon>
+        <h3 class="text-sm font-semibold text-ink">Appearance</h3>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for theme in available_themes %}
+            <form method="POST" action="{{ url_for('admin_bp.update_theme') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="theme" value="{{ theme.id }}" />
+
+                <button
+                    type="submit"
+                    class="w-full rounded-xl border p-3 text-left transition {% if theme.id == active_theme_id %}border-brand ring-2 ring-brand/20{% else %}border-line hover:border-line-strong{% endif %}"
+                >
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="h-6 w-6 rounded-full border border-line" style="background: {{ theme.light.canvas }};"></span>
+                        <span class="h-6 w-6 rounded-full" style="background: {{ theme.light.brand }};"></span>
+                        <span class="h-6 w-6 rounded-full" style="background: {{ theme.dark.canvas }};"></span>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-ink">{{ theme.name }}</span>
+                        {% if theme.id == active_theme_id %}
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-brand">Active</span>
+                        {% endif %}
+                    </div>
+                </button>
+            </form>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

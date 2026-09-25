@@ -1,5 +1,5 @@
 def test_password_strength_validation():
-    from lombik.validation import validate_password_strength
+    from application.validation import validate_password_strength
     
     invalid_cases = [
         "1234567",
@@ -27,7 +27,7 @@ def test_password_strength_validation():
 
 
 def test_email_pattern_validation():
-    from lombik.validation import valid_email_pattern
+    from application.validation import valid_email_pattern
     invalid_cases = [
         "test.at.com",
         "example@gmail@gmail.com",
@@ -73,7 +73,7 @@ def test_email_pattern_validation():
 
 
 def test_role_validation():
-    from lombik.validation import validate_role
+    from application.validation import validate_role
 
     invalid_cases = [
         None, "", "somelongstringthatwillneveroccurinroles"

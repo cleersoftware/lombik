@@ -13,7 +13,7 @@ MODULE_TEMPLATE = BASE_DIR / "templates" / "module"
 MODULE_TEMPLATE_TEMPLATES = BASE_DIR / "templates" / "module_templates"
 MODEL_TEMPLATE = BASE_DIR / "templates" / "model_templates" / "template.py"
 
-PROHIBITED_MODULE_NAMES = {"core", "auth"}
+PROHIBITED_MODULE_NAMES = {"core", "auth", "admin"}
 
 
 
@@ -101,6 +101,8 @@ IRREGULAR = {
     "logo": "logos",
     "video": "videos",
     "studio": "studios",
+    "bus": "buses",
+    "gas": "gases",
 }
 
 
@@ -340,7 +342,7 @@ class {to_camel(table_name)}(db.Model):
 
 
 @click.group()
-@click.version_option(version="3.2.5", prog_name="lombik")
+@click.version_option(version="4.0.0", prog_name="lombik")
 def cli():
     pass
 
@@ -361,7 +363,18 @@ def createapp(name):
 
     generate_from_template(STARTUP_TEMPLATE, target, replacements)
 
-    print(f"Created app: {name}")
+    print(f"\nCreated app: {name}\n")
+    print("Next steps:")
+    print(f"  cd {name}")
+    print("  pip install -r requirements.txt")
+    print("  lombik initdb")
+    print("  lombik superuser")
+    print("  lombik run")
+    print("\nThen start building:")
+    print("  lombik module team")
+    print("  lombik model tenant")
+    print("  lombik crud tenant")
+    print("  lombik relate tenant.id to user.tenant_id one-to-many")
 
 
 @cli.command()

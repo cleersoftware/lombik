@@ -1,14 +1,15 @@
 {% extends 'base/base.html' %}
 
-{% block title %}404 - Page not or has been permanently moved{% endblock %}
+{% block title %}Page not found{% endblock %}
 
 {% block content %}
-<section class="w-full h-full flex flex-col items-center justify-center">
-    <h1 class="text-9xl text-primary font-bold">404</h1>
-    <h2 class="text-xl font-light">Page not found or has been permanently moved</h2>
-    <div class="w-full flex items-center justify-center gap-12 p-12">
-        <a href="{{ url_for('core_bp.home') }}" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Return home</a>
-        <a href="#" class="w-40 flex items-center justify-center border border-zinc-800 rounded-xl px-4 py-2 hover:border-primary hover:text-primary">Report issue</a>
-    </div>
+<section class="w-full flex flex-col items-center justify-center py-20 text-center">
+    <h1 class="text-7xl font-bold text-brand">404</h1>
+    <h2 class="mt-4 text-xl font-light text-ink">Page not found</h2>
+    <p class="mt-2 max-w-sm text-sm text-ink-muted">The page you're looking for doesn't exist or has moved.</p>
+    <a href="{{ url_for('core_bp.home') }}"
+       class="mt-8 px-5 py-2.5 rounded-lg bg-ink text-canvas text-sm font-medium hover:opacity-90 transition">
+        Return home
+    </a>
 </section>
 {% endblock %}

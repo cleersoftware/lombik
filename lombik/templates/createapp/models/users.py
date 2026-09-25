@@ -1,4 +1,4 @@
-from lombik.utils import utc_now
+from application.utils import utc_now
 from db import db
 import uuid
 

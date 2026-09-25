@@ -1,14 +1,14 @@
 {
-    "name": "Lombik by cleer. Right off the bat",
-    "id": "/lombik",
+    "name": "Lombik",
+    "id": "/",
     "short_name": "Lombik",
     "scope": "/",
     "start_url": "/",
     "display": "standalone",
-    "description": "",
+    "description": "A hypermedia-first Flask application.",
     "categories": ["productivity"],
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
+    "background_color": "#F8F6F2",
+    "theme_color": "#F8F6F2",
     "icons": [
       {
         "src": "/static/icons/icon_192x192.png",
@@ -24,15 +24,15 @@
       }
     ],
     "shortcuts": [
-  {
-    "name": "Lombik",
-    "url": "/",
-    "icons": [
       {
-        "src": "/static/icons/icon_512x512.png",
-        "sizes": "96x96"
+        "name": "Home",
+        "url": "/",
+        "icons": [
+          {
+            "src": "/static/icons/icon_512x512.png",
+            "sizes": "96x96"
+          }
+        ]
       }
     ]
-  }
-]
-  }
+}

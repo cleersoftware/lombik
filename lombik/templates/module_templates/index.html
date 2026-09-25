@@ -5,7 +5,20 @@
 {% endblock %}
 
 {% block content %}
-<section class="w-full h-full flex items-center justify-center">
-    <h1 class="text-2xl font-semibold">Hello from {{ module_name }}</h1>
+<section class="w-full">
+    <h2 class="font-light text-ink text-2xl">{{ module_name }}</h2>
+    <p class="mt-2 text-sm text-ink-muted">
+        A freshly generated module. Add routes and services inside
+        <span class="font-mono text-ink">blueprints/{{ module_name }}/</span>.
+    </p>
+</section>
+
+<section class="rounded-xl border border-line bg-surface p-6">
+    <p class="text-sm text-ink-muted">
+        This module is registered automatically — visit
+        <a href="{{ url_for('{{ module_name }}_bp.home') }}" class="font-mono text-brand hover:underline">
+            /{{ module_name }}
+        </a>.
+    </p>
 </section>
 {% endblock %}

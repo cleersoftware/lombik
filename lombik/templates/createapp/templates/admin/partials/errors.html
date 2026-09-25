@@ -1,0 +1,52 @@
+{% if errors %}
+<div class="rounded-xl border border-line bg-surface overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-xs uppercase tracking-wide text-ink-muted border-b border-line">
+                    <th class="px-4 py-3 font-medium">Time</th>
+                    <th class="px-4 py-3 font-medium">Type</th>
+                    <th class="px-4 py-3 font-medium">Message</th>
+                    <th class="px-4 py-3 font-medium">Function</th>
+                    <th class="px-4 py-3 font-medium">Request</th>
+                    <th class="px-4 py-3 font-medium">User</th>
+                    <th class="px-4 py-3 font-medium">Tenant</th>
+                    <th class="px-4 py-3 font-medium"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+                {% for e in errors %}
+                <tr class="align-top">
+                    <td class="px-4 py-3 text-ink-muted whitespace-nowrap">{{ e.created_at | shortdatetime }}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block text-[11px] font-mono text-danger bg-danger/10 px-2 py-0.5 rounded">{{ e.exception_type }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-ink max-w-xs">{{ e.message }}</td>
+                    <td class="px-4 py-3 text-ink-muted font-mono text-xs">{{ e.function }}</td>
+                    <td class="px-4 py-3 text-ink-muted font-mono text-xs whitespace-nowrap">
+                        {{ e.method or '' }} {{ e.path or '' }}
+                    </td>
+                    <td class="px-4 py-3 text-ink-muted">
+                        {{ e.user.username if e.user else (e.user_id or '—') }}
+                    </td>
+                    <td class="px-4 py-3 text-ink-muted font-mono text-xs">{{ e.tenant_id or '—' }}</td>
+                    <td class="px-4 py-3">
+                        <details class="group">
+                            <summary class="text-xs text-brand cursor-pointer select-none">traceback</summary>
+                            <pre class="mt-2 text-xs text-ink-muted whitespace-pre-wrap max-w-xl">{{ e.traceback }}</pre>
+                            {% if e.args %}<p class="mt-2 text-xs text-ink-muted"><span class="font-mono">args:</span> {{ e.args }}</p>{% endif %}
+                            {% if e.kwargs %}<p class="mt-1 text-xs text-ink-muted"><span class="font-mono">kwargs:</span> {{ e.kwargs }}</p>{% endif %}
+                        </details>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="rounded-xl border border-line bg-surface p-8 text-center">
+    <ion-icon name="checkmark-circle-outline" class="text-success text-2xl"></ion-icon>
+    <p class="mt-2 text-sm text-ink-muted">No errors recorded.</p>
+</div>
+{% endif %}

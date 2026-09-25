@@ -1,3 +1,3 @@
-setTimeout(() => {
-    document.querySelectorAll('[data-flash]').forEach(el => el.remove());
-  }, 8500); 
+setTimeout(function () {
+    document.querySelectorAll('[data-flash]').forEach(function (el) { el.remove(); });
+}, 8500);

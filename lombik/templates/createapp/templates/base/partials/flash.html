@@ -1,19 +1,8 @@
 <div data-flash class="flash fixed bottom-4 right-4 space-y-3 z-50">
-
-  {% for category, message in messages %}
-    <div class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-sm
-                border border-zinc-200 bg-white text-zinc-800
-                dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
-
-      <ion-icon name="{{ message.icon }}"
-                class="{{ message.icon_class }} text-lg text-zinc-500 dark:text-zinc-400">
-      </ion-icon>
-
-      <span class="text-sm leading-snug">
-        {{ message.text }}
-      </span>
-
-    </div>
-  {% endfor %}
-
+    {% for category, message in messages %}
+        <div class="flex items-start gap-3 px-4 py-3 rounded-xl shadow-sm border border-line bg-surface text-ink">
+            <ion-icon name="{{ message.icon }}" class="{{ message.icon_class }} text-lg"></ion-icon>
+            <span class="text-sm leading-snug">{{ message.text }}</span>
+        </div>
+    {% endfor %}
 </div>

@@ -1,0 +1,209 @@
+{% extends 'auth/base.html' %}
+
+{% block title %}Set up your workspace{% endblock %}
+
+{% block content %}
+<main class="min-h-[100dvh] w-full flex justify-center items-start p-4 sm:p-8 md:p-12">
+    <section class="w-full max-w-4xl mt-2 sm:mt-8">
+        <div class="relative rounded-2xl border border-line bg-surface shadow-sm overflow-hidden flex flex-col md:flex-row">
+            <div class="w-full md:w-3/5 p-8 md:px-12 md:pb-12 flex flex-col justify-center">
+                <header class="mb-12 mt-8 flex items-center justify-between">
+                    <a href="{{ url_for('core_bp.home') }}" class="flex items-center gap-1 text-xl font-semibold tracking-tight text-ink">
+                        lombik<span class="text-brand">.</span>
+                    </a>
+                    <span class="text-[11px] font-semibold uppercase tracking-widest text-ink-muted">
+                        First run
+                    </span>
+                </header>
+
+                <div class="space-y-1 mb-8">
+                    <h2 class="text-2xl font-semibold text-ink tracking-tight">Set up your workspace</h2>
+                    <p class="text-sm text-ink-muted">
+                        Create the owner account. This superuser unlocks the admin panel.
+                    </p>
+                </div>
+
+                <form
+                    id="setup-form"
+                    method="POST"
+                    action="{{ url_for('admin_bp.complete_setup') }}"
+                    class="space-y-5"
+                >
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                    <div class="space-y-2">
+                        <label for="setup-username" class="text-[13px] font-medium text-ink">Username</label>
+                        <input
+                            id="setup-username"
+                            name="username"
+                            type="text"
+                            autocomplete="username"
+                            required
+                            minlength="3"
+                            placeholder="yourname"
+                            class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-raised border border-line focus:border-ink placeholder:text-ink-muted/60 text-ink transition-colors"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="setup-email" class="text-[13px] font-medium text-ink">Email address</label>
+                        <input
+                            id="setup-email"
+                            name="email"
+                            type="email"
+                            autocomplete="email"
+                            required
+                            placeholder="you@company.com"
+                            class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-raised border border-line focus:border-ink placeholder:text-ink-muted/60 text-ink transition-colors"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="setup-password" class="text-[13px] font-medium text-ink">Password</label>
+                        <input
+                            id="setup-password"
+                            name="password"
+                            type="password"
+                            autocomplete="new-password"
+                            required
+                            minlength="8"
+                            placeholder="Create a password"
+                            class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-raised border border-line focus:border-ink placeholder:text-ink-muted/60 text-ink transition-colors"
+                        />
+                        <div id="password-criteria-list" class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-muted">
+                            <span data-criterion="length">Min 8 characters</span>
+                            <span data-criterion="special">One special</span>
+                            <span data-criterion="number">One number</span>
+                            <span data-criterion="uppercase">One uppercase</span>
+                            <span data-criterion="lowercase">One lowercase</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="setup-confirm-password" class="text-[13px] font-medium text-ink">Confirm password</label>
+                        <input
+                            id="setup-confirm-password"
+                            name="confirm_password"
+                            type="password"
+                            autocomplete="new-password"
+                            required
+                            minlength="8"
+                            placeholder="Repeat your password"
+                            class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-raised border border-line focus:border-ink placeholder:text-ink-muted/60 text-ink transition-colors"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="setup-country" class="text-[13px] font-medium text-ink">Country</label>
+                        <select
+                            id="setup-country"
+                            name="country"
+                            required
+                            class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-raised border border-line focus:border-ink text-ink transition-colors"
+                        >
+                            <option value="" disabled selected>Select a country</option>
+                            {% for country in countries %}
+                                <option value="{{ country }}">{{ country }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        disabled
+                        class="w-full py-2.5 px-4 rounded-lg bg-ink text-canvas font-medium text-sm hover:opacity-90 active:scale-[0.99] transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        Create workspace
+                    </button>
+                </form>
+            </div>
+
+            <div class="w-full md:w-2/5 bg-line/30 border-t md:border-t-0 md:border-l border-line p-8 md:p-12 flex flex-col justify-center">
+                <div class="space-y-3">
+                    <span class="inline-block text-[11px] font-semibold uppercase tracking-widest text-ink-muted">
+                        You can also use the terminal
+                    </span>
+                    <h3 class="text-2xl font-medium text-ink leading-tight tracking-tight">
+                        Prefer the command line?
+                    </h3>
+                </div>
+
+                <div class="mt-8 rounded-xl border border-line bg-raised p-5 font-mono text-[13px] text-ink space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-success">$</span>
+                        <span>lombik superuser</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-success">$</span>
+                        <span>lombik run</span>
+                    </div>
+                </div>
+
+                <p class="mt-6 text-sm text-ink-muted">
+                    Both flows create the same owner account, so pick whichever feels
+                    more comfortable.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+(function () {
+    const form = document.getElementById('setup-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const username = document.getElementById('setup-username');
+    const email = document.getElementById('setup-email');
+    const password = document.getElementById('setup-password');
+    const confirmPassword = document.getElementById('setup-confirm-password');
+    const country = document.getElementById('setup-country');
+
+    const criteria = {
+        length: document.querySelector('[data-criterion="length"]'),
+        special: document.querySelector('[data-criterion="special"]'),
+        number: document.querySelector('[data-criterion="number"]'),
+        uppercase: document.querySelector('[data-criterion="uppercase"]'),
+        lowercase: document.querySelector('[data-criterion="lowercase"]'),
+    };
+
+    function checkPassword(value) {
+        criteria.length.classList.toggle('text-success', value.length >= 8);
+        criteria.special.classList.toggle('text-success', /[^A-Za-z0-9]/.test(value));
+        criteria.number.classList.toggle('text-success', /[0-9]/.test(value));
+        criteria.uppercase.classList.toggle('text-success', /[A-Z]/.test(value));
+        criteria.lowercase.classList.toggle('text-success', /[a-z]/.test(value));
+    }
+
+    function isValid() {
+        const passwordOk = Object.values(criteria).every(function (el) {
+            return el.classList.contains('text-success');
+        });
+        const match = password.value === confirmPassword.value && password.value.length > 0;
+        const valid =
+            username.value.trim().length >= 3 &&
+            email.validity.valid &&
+            passwordOk &&
+            match &&
+            country.value !== '';
+
+        submitBtn.disabled = !valid;
+        return valid;
+    }
+
+    password.addEventListener('input', function () {
+        checkPassword(password.value);
+        isValid();
+    });
+    [username, email, confirmPassword, country].forEach(function (el) {
+        el.addEventListener('input', isValid);
+    });
+    form.addEventListener('submit', function (e) {
+        if (!isValid()) e.preventDefault();
+    });
+
+    checkPassword(password.value);
+    isValid();
+})();
+</script>
+{% endblock %}

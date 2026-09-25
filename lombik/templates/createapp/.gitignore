@@ -1,9 +1,8 @@
 .env
 /flask_session
-/studio_history.json
-*__pycache__
-.bashrc
-.profile
-.bash_aliases
-.ssh/
+/instance
+*.pyc
+*__pycache__/
+/dev.db
+/dev.db-*
 .DS_Store

@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[0]
-TEMPLATE_ROOT = ROOT / "lombik" / "templates" / "createapp"
+# Make the generated app's packages (``application`` and ``models``) importable
+# when pytest runs from the project root.
+ROOT = Path(__file__).resolve().parent
 
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(TEMPLATE_ROOT))

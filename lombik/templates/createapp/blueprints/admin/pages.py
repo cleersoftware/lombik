@@ -1,3 +1,5 @@
+import os
+import subprocess
 from pathlib import Path
 
 from flask import g, redirect, render_template, request, session, url_for
@@ -11,7 +13,8 @@ from application.responses import htmx_response
 from application.utils import get_countries
 from models import User
 
-GUIDE_PATH = Path(__file__).resolve().parents[2] / "application" / "guide.md"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+GUIDE_PATH = PROJECT_ROOT / "application" / "guide.md"
 
 
 def _superuser_or_redirect():
@@ -225,7 +228,7 @@ def update_theme():
     else:
         Flash.error("Unknown theme.")
 
-    return redirect(url_for("admin_bp.appearance"))
+    return redirect(url_for("admin_bp.appearance_page"))
 
 
 @admin_bp.post("/themes")
@@ -244,7 +247,7 @@ def create_theme():
     else:
         Flash.error(error or "Could not create theme.")
 
-    return redirect(url_for("admin_bp.appearance"))
+    return redirect(url_for("admin_bp.appearance_page"))
 
 
 @admin_bp.post("/themes/<name>/delete")
@@ -258,4 +261,67 @@ def delete_theme(name):
     else:
         Flash.error("Built-in themes cannot be deleted.")
 
-    return redirect(url_for("admin_bp.appearance"))
+    return redirect(url_for("admin_bp.appearance_page"))
+
+
+@admin_bp.post("/terminal")
+def terminal():
+    guard = _superuser_or_redirect()
+    if guard:
+        return guard
+
+    command = (request.form.get("command") or "").strip()
+    if not command:
+        return render_template("admin/partials/terminal_entry.html", command="", output="(no command)", status=1)
+    if len(command) > 2000:
+        return render_template("admin/partials/terminal_entry.html", command=command[:2000], output="Command too long.", status=1)
+
+    if command in ("help", "lombik help", "lombik --help"):
+        help_text = (
+            "Lombik commands\n"
+            "----------------\n"
+            "lombik createapp <name>          generate a new app\n"
+            "lombik module <name>             add a blueprint module\n"
+            "lombik model <name>              add + register a model\n"
+            "lombik crud <model>              generate a full CRUD module\n"
+            "lombik relate a.id to b.a_id     create a relationship\n"
+            "lombik db -m \"message\"           migrate + upgrade\n"
+            "lombik run                       start the dev server\n"
+            "lombik test                      run pytest\n"
+            "\n"
+            "Flask commands\n"
+            "--------------\n"
+            "flask db migrate -m \"msg\"        create a migration\n"
+            "flask db upgrade                 apply migrations\n"
+            "flask routes                     list routes\n"
+            "\n"
+            "Terminal\n"
+            "--------\n"
+            "help                             show this help"
+        )
+        return render_template("admin/partials/terminal_entry.html", command=command, output=help_text, status=0)
+
+    env = os.environ.copy()
+    env["FLASK_APP"] = "app.py"
+
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            cwd=PROJECT_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            stdin=subprocess.DEVNULL,
+        )
+    except subprocess.TimeoutExpired:
+        return render_template("admin/partials/terminal_entry.html", command=command, output="Command timed out.", status=1)
+
+    output = ((result.stdout or "") + (result.stderr or "")).strip()
+    if len(output) > 8000:
+        output = output[:8000] + "\n… (truncated)"
+    if not output:
+        output = "(no output)"
+
+    return render_template("admin/partials/terminal_entry.html", command=command, output=output, status=result.returncode)

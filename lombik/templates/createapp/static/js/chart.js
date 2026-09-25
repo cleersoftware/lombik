@@ -245,6 +245,11 @@ const ChartThemes = {
     return String(Math.round(value * 100) / 100);
   }
 
+  function labelStep(n) {
+    if (n <= 12) return 1;
+    return Math.ceil(n / 12);
+  }
+
   function parseArray(value, fallback = []) {
     if (!value) return fallback;
     try {
@@ -461,6 +466,7 @@ const ChartThemes = {
 
       const band = width / n;
       const barWidth = band * 0.7;
+      const step = labelStep(n);
 
       for (let i = 0; i < n; i++) {
         const value = y[i];
@@ -479,13 +485,15 @@ const ChartThemes = {
           'stroke-width': theme['bar-border-width'] || '1'
         }));
 
-        svg.append(svgEl('text', {
-          x: cx,
-          y: margin.top + height + 20,
-          'text-anchor': 'middle',
-          'font-size': theme['font-size'],
-          fill: theme['text-color']
-        }, String(x[i] !== undefined ? x[i] : i + 1)));
+        if (i % step === 0 || i === n - 1) {
+          svg.append(svgEl('text', {
+            x: cx,
+            y: margin.top + height + 20,
+            'text-anchor': 'middle',
+            'font-size': theme['font-size'],
+            fill: theme['text-color']
+          }, String(x[i] !== undefined ? x[i] : i + 1)));
+        }
       }
 
       svg.append(svgEl('line', {
@@ -584,19 +592,22 @@ const ChartThemes = {
 
       const band = width / n;
       const points = [];
+      const step = labelStep(n);
 
       for (let i = 0; i < n; i++) {
         const cx = margin.left + band * i + band / 2;
         const cy = margin.top + height - (y[i] - domain.min) * yScale;
         points.push({ cx, cy });
 
-        svg.append(svgEl('text', {
-          x: cx,
-          y: margin.top + height + 20,
-          'text-anchor': 'middle',
-          'font-size': theme['font-size'],
-          fill: theme['text-color']
-        }, String(x[i] !== undefined ? x[i] : i + 1)));
+        if (i % step === 0 || i === n - 1) {
+          svg.append(svgEl('text', {
+            x: cx,
+            y: margin.top + height + 20,
+            'text-anchor': 'middle',
+            'font-size': theme['font-size'],
+            fill: theme['text-color']
+          }, String(x[i] !== undefined ? x[i] : i + 1)));
+        }
       }
 
       if (points.length > 1) {
@@ -717,19 +728,22 @@ const ChartThemes = {
 
       const band = width / n;
       const points = [];
+      const step = labelStep(n);
 
       for (let i = 0; i < n; i++) {
         const cx = margin.left + band * i + band / 2;
         const cy = margin.top + height - (y[i] - domain.min) * yScale;
         points.push({ cx, cy });
 
-        svg.append(svgEl('text', {
-          x: cx,
-          y: margin.top + height + 20,
-          'text-anchor': 'middle',
-          'font-size': theme['font-size'],
-          fill: theme['text-color']
-        }, String(x[i] !== undefined ? x[i] : i + 1)));
+        if (i % step === 0 || i === n - 1) {
+          svg.append(svgEl('text', {
+            x: cx,
+            y: margin.top + height + 20,
+            'text-anchor': 'middle',
+            'font-size': theme['font-size'],
+            fill: theme['text-color']
+          }, String(x[i] !== undefined ? x[i] : i + 1)));
+        }
       }
 
       if (points.length > 1) {

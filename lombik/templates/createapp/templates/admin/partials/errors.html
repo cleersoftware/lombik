@@ -21,7 +21,15 @@
                     <td class="px-4 py-3">
                         <span class="inline-block text-[11px] font-mono text-danger bg-danger/10 px-2 py-0.5 rounded">{{ e.exception_type }}</span>
                     </td>
-                    <td class="px-4 py-3 text-ink max-w-xs">{{ e.message }}</td>
+                    <td class="px-4 py-3 text-ink max-w-xs">
+                        <span>{{ e.message }}</span>
+                        <button type="button"
+                                onclick="copyText({{ e.message | tojson }}, this)"
+                                class="ml-1 text-ink-muted hover:text-ink transition-colors"
+                                title="Copy message">
+                            <ion-icon name="copy-outline" class="text-sm"></ion-icon>
+                        </button>
+                    </td>
                     <td class="px-4 py-3 text-ink-muted font-mono text-xs">{{ e.function }}</td>
                     <td class="px-4 py-3 text-ink-muted font-mono text-xs whitespace-nowrap">
                         {{ e.method or '' }} {{ e.path or '' }}

@@ -1,0 +1,7 @@
+<div class="space-y-1">
+    <div class="flex items-center gap-2 font-mono text-xs">
+        <span class="text-success">$</span>
+        <span class="text-ink">{{ command }}</span>
+    </div>
+    <pre class="font-mono text-xs whitespace-pre-wrap {% if status %}text-danger{% else %}text-ink-muted{% endif %}">{{ output }}</pre>
+</div>

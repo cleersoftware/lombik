@@ -3,6 +3,8 @@ import subprocess
 import secrets
 import shutil
 import re
+import os
+import sys
 import click
 
 
@@ -53,6 +55,38 @@ def replace_placeholders(target_dir: Path, replacements: dict):
 def generate_from_template(template: Path, target: Path, replacements: dict):
     shutil.copytree(template, target)
     replace_placeholders(target, replacements)
+
+
+def _auto_initialize(target: Path):
+    """Create migrations + dev.db so a new app works immediately.
+
+    This is a best-effort convenience step. If it fails (e.g. DATABASE_URL
+    points at an unreachable database), the app still generates fine and the
+    user can run ``lombik initdb`` manually.
+    """
+    env = os.environ.copy()
+    env["FLASK_APP"] = "app.py"
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "flask", "initdb"],
+            cwd=target,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        print("  ! Could not auto-initialize the database. Run `lombik initdb` to finish setup.")
+        return
+
+    if result.returncode == 0:
+        print("  Database initialized (dev.db + migrations/).")
+    else:
+        print("  ! Could not auto-initialize the database. Run `lombik initdb` to finish setup.")
+        tail = (result.stderr or result.stdout or "").strip().splitlines()
+        if tail:
+            print(f"    {tail[-1][:200]}")
 
 
 # Pluralization support
@@ -363,11 +397,11 @@ def createapp(name):
 
     generate_from_template(STARTUP_TEMPLATE, target, replacements)
 
-    print(f"\nCreated app: {name}\n")
-    print("Next steps:")
+    print(f"\nCreated app: {name}")
+    _auto_initialize(target)
+    print("\nNext steps:")
     print(f"  cd {name}")
     print("  pip install -r requirements.txt")
-    print("  lombik initdb")
     print("  lombik run")
     print("\nThen open:")
     print("  http://127.0.0.1:5000")

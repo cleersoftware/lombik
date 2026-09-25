@@ -158,26 +158,23 @@ The backend helper for drag persistence is `application/drag.py`:
 ## Local development loop
 
 ```bash
-# 1. Create a fresh generated app for testing
+# 1. Create a fresh generated app for testing (DB is initialised automatically)
 python -m lombik.cli createapp /tmp/lombik_test_app
 cd /tmp/lombik_test_app
 
-# 2. Initialize the database (SQLite fallback by default)
-python -m flask initdb
-
-# 3. Create a superuser
+# 2. Create a superuser (or use the /admin first-run page)
 printf 'admin@example.com\nadmin\nczechia\nPassword123!\nPassword123!\n' | python -m flask superuser
 
-# 4. Create a model and generate CRUD
+# 3. Create a model and generate CRUD
 python -m lombik.cli model tenant
 # add columns to models/tenants.py if needed
 python -m lombik.cli crud tenant
 
-# 5. Migrate
+# 4. Migrate
 python -m flask db migrate -m "add tenants"
 python -m flask db upgrade
 
-# 6. Run tests
+# 5. Run tests
 python -m pytest -q
 ```
 

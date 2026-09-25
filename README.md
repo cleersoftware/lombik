@@ -24,13 +24,15 @@ cd myapp
 pip install -r requirements.txt
 ```
 
-Then:
+`createapp` also initialises the database for you (creates `migrations/` and a
+local `dev.db`), so there's nothing else to run:
 
 ```bash
-lombik initdb      # create/apply migrations + DB triggers
-lombik superuser   # create your first superuser
 lombik run         # flask run --debug on localhost:5000
 ```
+
+Then open **http://127.0.0.1:5000** — the first-run page creates your owner
+account. Prefer the terminal? `lombik superuser` does the same thing.
 
 By default, local development uses **SQLite** when `DATABASE_URL` is empty.
 Production uses **PostgreSQL** via the `DATABASE_URL` environment variable.
@@ -41,9 +43,9 @@ Production uses **PostgreSQL** via the `DATABASE_URL` environment variable.
 
 | Command | What it does |
 |---|---|
-| `lombik createapp <name>` | Generate a new application |
+| `lombik createapp <name>` | Generate a new application (DB initialised automatically) |
 | `lombik run` | Run the development server |
-| `lombik initdb` | Initialize the database and migrations |
+| `lombik initdb` | Re-initialise the database/migrations manually |
 | `lombik superuser` | Create a superuser interactively |
 | `lombik module <name>` | Generate a blueprint module |
 | `lombik model <name>` | Generate a model and register it |

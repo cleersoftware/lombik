@@ -12,6 +12,7 @@ from application.triggers import create_all_triggers, drop_all_triggers
 
 import subprocess
 import os
+import sys
 
 
 def db_initialized():
@@ -27,10 +28,10 @@ def run_migrations():
     migrations_dir = Path.cwd() / "migrations"
 
     if not (migrations_dir / "alembic.ini").exists():
-        subprocess.run(["flask", "db", "init"], check=True)
+        subprocess.run([sys.executable, "-m", "flask", "db", "init"], check=True)
 
-    subprocess.run(["flask", "db", "migrate", "-m", "auto init"], check=True)
-    subprocess.run(["flask", "db", "upgrade"], check=True)
+    subprocess.run([sys.executable, "-m", "flask", "db", "migrate", "-m", "auto init"], check=True)
+    subprocess.run([sys.executable, "-m", "flask", "db", "upgrade"], check=True)
 
 
 def initialize_db(app):
